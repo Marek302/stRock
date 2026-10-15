@@ -1,18 +1,47 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
 import type { Map } from 'leaflet'
+import { useRoute, useRouter } from 'vue-router'
 import MapPost from '../components/MapPost.vue'
 import BackgroundMap from '../components/BackgroundMap.vue'
 import { usePostLocations } from '../composables/usePostLocations'
+import { containsPoint } from '../maps/geometry'
+import { saintRochRings } from '../maps/saintRoch'
 
 const { locations, isLoading, error, reload } = usePostLocations()
+const route = useRoute()
+const router = useRouter()
+const isPickingLocation = computed(() => route.name === 'map' && route.query.pickPostLocation === '1')
+const locationError = ref<string | null>(null)
 const mapInstance = shallowRef<Map | null>(null)
 const selectedPostId = ref<string | null>(null)
 watch(mapInstance, (map, _previous, onCleanup) => {
   if (!map) return
-  const closePreview = () => { selectedPostId.value = null }
-  map.on('click', closePreview)
-  onCleanup(() => map.off('click', closePreview))
+  const onMapClick = (event: { latlng: { lat: number; lng: number } }) => {
+    if (!isPickingLocation.value) {
+      selectedPostId.value = null
+      return
+    }
+    const { lat, lng } = event.latlng
+    if (!containsPoint([lng, lat], saintRochRings)) {
+      locationError.value = 'Choisissez un point dans le quartier Saint-Roch.'
+      return
+    }
+    locationError.value = null
+    void router.push({
+      name: 'posts',
+      query: { resumePost: '1', latitude: String(lat), longitude: String(lng) },
+    })
+  }
+  map.on('click', onMapClick)
+  onCleanup(() => map.off('click', onMapClick))
+})
+watch(isPickingLocation, (picking) => {
+  locationError.value = null
+  if (picking) selectedPostId.value = null
+})
+watch(() => route.name, (name, previous) => {
+  if (name === 'map' && previous !== 'map') void reload()
 })
 const positionedPosts = computed(() => locations.value.filter(
   (post): post is { id: string; latitude: number; longitude: number } =>
@@ -25,7 +54,7 @@ const positionedPosts = computed(() => locations.value.filter(
 <template>
   <main id="carte" class="page" tabindex="-1" :aria-busy="isLoading">
     <BackgroundMap @ready="mapInstance = $event" />
-    <template v-if="mapInstance">
+    <template v-if="mapInstance && !isPickingLocation">
       <MapPost
         v-for="post in positionedPosts"
         :key="post.id"
@@ -38,6 +67,11 @@ const positionedPosts = computed(() => locations.value.filter(
         :longitude="post.longitude"
       />
     </template>
+    <div v-if="isPickingLocation" class="location-picker-panel">
+      <p>Appuyez sur la carte pour placer votre publication dans Saint-Roch.</p>
+      <p v-if="locationError" role="alert">{{ locationError }}</p>
+      <button type="button" @click="router.push({ name: 'posts', query: { resumePost: '1' } })">Retour à la publication</button>
+    </div>
     <div v-if="error" class="liquid-glass absolute left-4 top-4 z-[1000] max-w-[calc(100%-112px)] rounded-2xl p-4 text-sm text-slate-800" role="alert">
       <p>{{ error }}</p>
       <button type="button" class="mt-2 min-h-11 cursor-pointer rounded-lg px-3 font-medium underline" @click="reload">
@@ -46,3 +80,20 @@ const positionedPosts = computed(() => locations.value.filter(
     </div>
   </main>
 </template>
+
+<style scoped>
+.location-picker-panel {
+  position: absolute;
+  z-index: 1000;
+  top: 16px;
+  left: 16px;
+  max-width: min(360px, calc(100% - 32px));
+  padding: 12px;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 15%);
+}
+
+.location-picker-panel p { margin: 0 0 8px; }
+.location-picker-panel button { color: #2563eb; cursor: pointer; }
+</style>

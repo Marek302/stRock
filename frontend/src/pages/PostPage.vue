@@ -1,20 +1,68 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getPost } from '../api/posts'
-import type { PostItem } from '../types/post'
+import type { CommunityPost, PostItem } from '../types/post'
 import Post from '../components/Post.vue'
+import CreatePostButton from '../components/CreatePostButton.vue'
+import PostCreationOverlay from '../components/PostCreationOverlay.vue'
 import { toPostItem, usePosts } from '../composables/usePosts'
+import { clearPostCreationDraft, selectPostLocation } from '../composables/usePostCreation'
 
 const { posts, isLoading, error, hasMore, reload, loadMore, loadOnScroll } = usePosts()
 const route = useRoute()
+const router = useRouter()
 const selectedPost = ref<PostItem | null>(null)
 const selectedLoading = ref(false)
 const selectedError = ref<string | null>(null)
 const feedElement = ref<HTMLElement | null>(null)
+const isCreationOpen = ref(false)
+let previousFocus: HTMLElement | null = null
 const displayedPosts = computed(() => selectedPost.value
   ? [selectedPost.value, ...posts.value.filter(post => post.id !== selectedPost.value?.id)]
   : posts.value)
+
+function openCreation() {
+  previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+  isCreationOpen.value = true
+}
+
+async function closeCreation() {
+  isCreationOpen.value = false
+  clearPostCreationDraft()
+  await nextTick()
+  previousFocus?.focus()
+}
+
+async function selectLocation() {
+  isCreationOpen.value = false
+  await router.push({ name: 'map', query: { pickPostLocation: '1' } })
+}
+
+async function handleCreated(post: CommunityPost) {
+  await closeCreation()
+  await router.replace({ name: 'posts', query: { post: post.id } })
+  void reload()
+}
+
+watch(() => route.name, (name) => {
+  if (name !== 'posts') isCreationOpen.value = false
+})
+
+watch(() => route.query.resumePost, (resume) => {
+  if (route.name !== 'posts' || resume !== '1') return
+  const latitude = Number(route.query.latitude)
+  const longitude = Number(route.query.longitude)
+  if (typeof route.query.latitude === 'string' && typeof route.query.longitude === 'string'
+    && Number.isFinite(latitude) && Number.isFinite(longitude)
+    && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
+    void selectPostLocation(latitude, longitude)
+  }
+  isCreationOpen.value = true
+  void router.replace({ name: 'posts', query: {
+    ...route.query, resumePost: undefined, latitude: undefined, longitude: undefined,
+  } })
+}, { immediate: true })
 
 watch(() => route.name === 'posts' ? route.query.post : undefined, async (id, _previous, onCleanup) => {
   selectedPost.value = null
@@ -72,6 +120,10 @@ watch(() => route.name === 'posts' ? route.query.post : undefined, async (id, _p
         <p v-else-if="!displayedPosts.length" role="status">Aucune publication pour le moment.</p>
       </div>
     </div>
+    <CreatePostButton @click="openCreation" />
+    <Teleport to="body">
+      <PostCreationOverlay v-if="isCreationOpen" @close="closeCreation" @created="handleCreated" @select-location="selectLocation" />
+    </Teleport>
   </main>
 </template>
 

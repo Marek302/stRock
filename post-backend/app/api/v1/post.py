@@ -4,6 +4,8 @@ Routes pour les publications
 
 """
 from typing import Tuple
+from xml.etree import ElementTree
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.schemas.firebase_user_token import FirebaseUserToken
 import app.schemas.summary.post_list_response as postListResponse
@@ -39,6 +41,40 @@ async def get_post_locations(
 ):
     """Liste tous les posts avec uniquement leur ID, latitude et longitude."""
     return service.list_locations()
+
+
+@router.get("/reverse-geocode")
+async def reverse_geocode(
+    latitude: float = Query(..., ge=-90, le=90),
+    longitude: float = Query(..., ge=-180, le=180),
+):
+    """Retourne l'adresse canadienne la plus proche du point choisi."""
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            response = await client.get(
+                "https://geocoder.ca/",
+                params={
+                    "latt": latitude,
+                    "longt": longitude,
+                    "reverse": 1,
+                    "geoit": "XML",
+                    "standard": 1,
+                },
+            )
+            response.raise_for_status()
+        root = ElementTree.fromstring(response.content)
+    except (httpx.HTTPError, ElementTree.ParseError) as exc:
+        raise HTTPException(status_code=502, detail="Service de recherche d’adresse indisponible") from exc
+
+    def field(name: str) -> str:
+        return (root.findtext(f".//{name}") or "").strip()
+
+    street = " ".join(part for part in (field("stnumber"), field("staddress")) if part)
+    street = street or field("NearRoad")
+    if not street:
+        raise HTTPException(status_code=404, detail="Aucune adresse trouvée pour ce point")
+    address = ", ".join(part for part in (street, field("city"), field("prov")) if part)
+    return {"address": address[:256]}
 
 
 @router.post("", status_code=201)

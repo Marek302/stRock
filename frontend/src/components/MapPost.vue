@@ -45,8 +45,10 @@ onBeforeUnmount(() => instance?.remove())
 
 <template>
   <Teleport v-if="target" :to="target">
-    <PostPreview v-if="selected" :post-id="postId" @close="emit('close')" />
-    <button v-else type="button" class="map-post" aria-label="Voir cette publication" @click.stop="emit('select')">
+    <Transition name="post-preview">
+      <PostPreview v-if="selected" :post-id="postId" @close="emit('close')" />
+    </Transition>
+    <button v-if="!selected" type="button" class="map-post" aria-label="Voir cette publication" @click.stop="emit('select')">
       <MapMarker size="24" aria-hidden="true" />
     </button>
   </Teleport>

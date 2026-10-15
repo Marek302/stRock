@@ -85,8 +85,14 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
   }
 }
 
+.map-post-card.post-preview-leave-active {
+  pointer-events: none;
+  animation: preview-open 340ms ease-in reverse both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .map-post-card {
+  .map-post-card,
+  .map-post-card.post-preview-leave-active {
     animation: none;
   }
 }
