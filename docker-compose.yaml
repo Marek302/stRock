@@ -1,106 +1,75 @@
 services:
-  nginx:
+  reverse-proxy:
     image: nginx:latest
     build:
-      context: nginx
+      context: reverse-proxy
       dockerfile: Dockerfile
-    container_name: 10books-proxy
+    container_name: rock-on-proxy
     ports:
       - "8080:80"
     networks:
-      - 10books-website
-      - 10books-releases
-      - 10books-network
+      - frontend
+      - rock-on-network
     restart: unless-stopped
     depends_on:
-      - books-api
-      - listing-api
-      - messaging-api
+      - frontend
+      - post-backend
+      - messaging-backend
 
-  website:
+  frontend:
     image: nginx:alpine
-    container_name: 10books-website
+    container_name: frontend
     env_file:
-      - 10books-website/.env
+      - frontend/.env
     build:
-      context: 10books-website
+      context: frontend
       dockerfile: Dockerfile
     networks:
-      - 10books-website
+      - frontend
     restart: unless-stopped
 
-  releases-api:
-    image: releases-api:latest
+  post-backend:
+    image: post-backend:latest
     build:
-      context: ./10books-releases
-      dockerfile: Dockerfile
-    container_name: 10books-releases
-    shm_size: '512mb'
-    env_file:
-      - 10books-releases/.env
-    networks:
-      - 10books-releases
-    volumes:
-      - ./10books-releases/keystore.jks:/app/keystore.jks:ro
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-    restart: unless-stopped
-
-  books-api:
-    image: books-api:latest
-    build:
-      context: ./10books-books-api
-      dockerfile: Dockerfile
-    container_name: 10books-books-api
-    env_file:
-      - 10books-books-api/.env
-    networks:
-      - 10books-network
-    restart: unless-stopped
-
-  listing-api:
-    image: listing-api:latest
-    build:
-      context: ./10books-listing-api
+      context: ./post-backend
       dockerfile: Dockerfile.test
-    container_name: 10books-listing-api
+    container_name: post-backend
     env_file:
-      - 10books-listing-api/.env
+      - post-backend/.env
     networks:
-      - 10books-network
-      - 10books-listing
+      - rock-on-network
+      - rock-on-post
     depends_on:
-      postgres-db:
+      post-db:
         condition: service_healthy
     restart: unless-stopped
 
-  messaging-api:
-    image: messaging-api:latest
+  messaging-backend:
+    image: messaging-backend:latest
     build:
-      context: 10books-messaging-api/
+      context: messaging-backend/
       dockerfile: Dockerfile
-    container_name: 10books-messaging-api
+    container_name: messaging-backend
     env_file:
-      - 10books-messaging-api/.env
+      - messaging-backend/.env
     networks:
-      - 10books-network
-      - 10books-messaging
+      - rock-on-network
+      - rock-on-messaging
     restart: unless-stopped
     depends_on:
-      - messaging-api-db
+      messaging-db:
+        condition: service_healthy
 
-  postgres-db:
-    image: postgres-db:latest
+  post-db:
+    image: post-db:latest
     build:
-      context: postgres-db
+      context: post-db
       dockerfile: Dockerfile
-    container_name: postgres-db
+    container_name: post-db
     env_file:
-      - postgres-db/.env
+      - post-db/.env
     networks:
-      - 10books-releases
-      - 10books-listing
+      - rock-on-post
     restart: always
 
     healthcheck:
@@ -110,19 +79,27 @@ services:
       retries: 5
       start_period: 10s
 
-  messaging-api-db:
+  messaging-db:
     image: messaging-db:latest
     build:
       context: messaging-db
       dockerfile: Dockerfile
+    container_name: messaging-db
     env_file:
       - messaging-db/.env
     networks:
-      - 10books-messaging
+      - rock-on-messaging
+    restart: always
+
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
-  10books-website:
-  10books-network:
-  10books-listing:
-  10books-messaging:
-  10books-releases:
+  frontend:
+  rock-on-network:
+  rock-on-post:
+  rock-on-messaging:
