@@ -11,7 +11,9 @@
   "dependencies": {
     "@primeicons/vue": "^8.0.2",
     "@primeuix/themes": "^1.2.5",
+    "firebase": "^13.0.0",
     "leaflet": "^1.9.4",
+    "lucide-vue-next": "^1.0.0",
     "primeicons": "^8.0.2",
     "primevue": "^4.5.5",
     "vue": "^3.5.42",
