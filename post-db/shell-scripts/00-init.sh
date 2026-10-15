@@ -18,12 +18,12 @@ fi
 if [[ "${ENVIRONMENT:-}" == "TEST" ]]; then
   FILES=(
     "$WORKDIR/01-create.sql"
-    "$WORKDIR/03-insert.test.sql"
+    "$WORKDIR/02-insert.test.sql"
   )
 else
   FILES=(
     "$WORKDIR/01-create.sql"
-    "$WORKDIR/03-insert.sql"
+    "$WORKDIR/02-insert.sql"
     )
 fi
 

@@ -1,3 +1,5 @@
+\c "{{DB_NAME}}"
+SET TIME ZONE 'America/Toronto';
 -- Événements fictifs de démonstration, lieux réels, coordonnées approximatives.
 INSERT INTO post (id, user_id, content_type, title, description, location, latitude, longitude, starts_at, ends_at)
 VALUES
@@ -21,4 +23,13 @@ VALUES
  'Événement fictif de démonstration. Une compétition amicale d’art urbain devant la bibliothèque Gabrielle-Roy : créez une œuvre inspirée de Saint-Roch sur papier ou sur un panneau apporté pour l’occasion, puis participez au vote du public. Tous les styles sont bienvenus. Sans affiliation avec la bibliothèque.',
  'Bibliothèque Gabrielle-Roy, 350 rue Saint-Joseph Est, Québec', 46.8155, -71.2246,
  CURRENT_DATE + INTERVAL '6 days 14 hours', CURRENT_DATE + INTERVAL '6 days 16 hours')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO image (id, post_id, image_index, image_path)
+VALUES
+('f0010000-0000-4000-8000-000000000001', 'strock-demo/e0010000-0000-4000-8000-000000000001', 0, '/strock-demo/e0010000-0000-4000-8000-000000000001/f0010000-0000-4000-8000-000000000001'),
+('f0010000-0000-4000-8000-000000000002', 'strock-demo/e0010000-0000-4000-8000-000000000002', 0, '/strock-demo/e0010000-0000-4000-8000-000000000002/f0010000-0000-4000-8000-000000000002'),
+('f0010000-0000-4000-8000-000000000003', 'strock-demo/e0010000-0000-4000-8000-000000000003', 0, '/strock-demo/e0010000-0000-4000-8000-000000000003/f0010000-0000-4000-8000-000000000003'),
+('f0010000-0000-4000-8000-000000000004', 'strock-demo/e0010000-0000-4000-8000-000000000004', 0, '/strock-demo/e0010000-0000-4000-8000-000000000004/f0010000-0000-4000-8000-000000000004'),
+('f0010000-0000-4000-8000-000000000005', 'strock-demo/e0010000-0000-4000-8000-000000000005', 0, '/strock-demo/e0010000-0000-4000-8000-000000000005/f0010000-0000-4000-8000-000000000005')
 ON CONFLICT (id) DO NOTHING;
