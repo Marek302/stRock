@@ -1,7 +1,20 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { API_BASE_URL } from '../api/client'
 import { getPosts } from '../api/posts'
-import type { PostItem } from '../types/post'
+import type { CommunityPost, PostItem } from '../types/post'
+
+export function toPostItem(post: CommunityPost): PostItem {
+  return {
+    id: post.id,
+    title: post.title,
+    description: post.description,
+    userId: post.user_id,
+    location: post.location ?? undefined,
+    startsAt: post.starts_at ?? undefined,
+    endsAt: post.ends_at ?? undefined,
+    imageUrl: post.images[0] ? `${API_BASE_URL}/images/${post.images[0].id}` : undefined,
+  }
+}
 
 export function usePosts() {
   const posts = ref<PostItem[]>([])
@@ -19,16 +32,7 @@ export function usePosts() {
 
     try {
       const result = await getPosts(reset ? 0 : nextSkip, 20, controller.signal)
-      const items = result.posts.map((post) => ({
-        id: post.id,
-        title: post.title,
-        description: post.description,
-        userId: post.user_id,
-        location: post.location ?? undefined,
-        startsAt: post.starts_at ?? undefined,
-        endsAt: post.ends_at ?? undefined,
-        imageUrl: post.images[0] ? `${API_BASE_URL}/images/${post.images[0].id}` : undefined,
-      }))
+      const items = result.posts.map(toPostItem)
 
       posts.value = reset ? items : [...posts.value, ...items]
       nextSkip = result.skip + result.posts.length

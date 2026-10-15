@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import type { Map } from 'leaflet'
 import MapPost from '../components/MapPost.vue'
 import BackgroundMap from '../components/BackgroundMap.vue'
@@ -7,6 +7,13 @@ import { usePostLocations } from '../composables/usePostLocations'
 
 const { locations, isLoading, error, reload } = usePostLocations()
 const mapInstance = shallowRef<Map | null>(null)
+const selectedPostId = ref<string | null>(null)
+watch(mapInstance, (map, _previous, onCleanup) => {
+  if (!map) return
+  const closePreview = () => { selectedPostId.value = null }
+  map.on('click', closePreview)
+  onCleanup(() => map.off('click', closePreview))
+})
 const positionedPosts = computed(() => locations.value.filter(
   (post): post is { id: string; latitude: number; longitude: number } =>
     post.latitude != null && post.longitude != null
@@ -23,6 +30,10 @@ const positionedPosts = computed(() => locations.value.filter(
         v-for="post in positionedPosts"
         :key="post.id"
         :map="mapInstance"
+        :post-id="post.id"
+        :selected="selectedPostId === post.id"
+        @select="selectedPostId = post.id"
+        @close="selectedPostId = null"
         :latitude="post.latitude"
         :longitude="post.longitude"
       />
