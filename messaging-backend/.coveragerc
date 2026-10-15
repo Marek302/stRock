@@ -1,0 +1,13 @@
+[run]
+source = app
+concurrency = 
+    thread
+branch = True
+omit =
+    app/tests/*
+    */__pycache__/*
+    .venv/*
+
+[report]
+show_missing = True
+skip_covered = True

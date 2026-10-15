@@ -1,0 +1,8 @@
+[MESSAGES CONTROL]
+# R0903: too-few-public-methods (pour tes classes de test)
+# W0621: redefined-outer-name (pour les fixtures pytest)
+disable=R0903,W0621,C0303,C0304
+
+[MASTER]
+init-hook='import sys; sys.path.append(".")'
+ignore=.venv

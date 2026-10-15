@@ -1,0 +1,16 @@
+FROM python:3.14
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+COPY external/ ./external/
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY dev_images/ storage/ 
+
+COPY . .
+
+CMD ["fastapi", "run", "main.py"]

@@ -1,0 +1,9 @@
+pylint
+pre-commit
+pytest
+pytest-asyncio
+httpx
+testcontainers[mongodb]
+pymongo
+coverage
+gevent

@@ -89,9 +89,11 @@ distribué sur Données Québec sous licence CC BY 4.0 :
 https://www.donneesquebec.ca/recherche/dataset/5b1ae6f2-6719-46df-bd2f-e57a7034c917
 
 Le seul quartier Saint-Roch est conservé dans `src/data/saint-roch.json`.
-Le dézoom minimum s’adapte à l’écran. Le fond est découpé au contour officiel ;
-l’extérieur est blanc rosé clair (`#fff1f2`). Les tuiles entièrement extérieures
-ne sont pas téléchargées ; les tuiles chevauchant le contour sont découpées.
+Le dézoom minimum s’adapte à l’écran. Saint-Roch conserve ses couleurs normales ;
+les alentours visibles sont affichés en niveaux de gris et assombris pour signaler
+la limite du quartier, sans agrandir la carte ni changer les déplacements.
+Chaque tuile utilise une seule image : un fond désaturé via CSS et un rendu canvas
+en couleurs découpé au contour officiel. Seules les tuiles visibles sont chargées.
 
 Le déplacement est bloqué avant affichage à la frontière du quartier, sans
 recentrage après relâchement. Le zoom reste centré et l’inertie est désactivée

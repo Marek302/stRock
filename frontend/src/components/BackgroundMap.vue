@@ -32,7 +32,6 @@ onMounted(() => {
   removeMovementConstraint = constrainMovement(instance)
 
   new SaintRochLayer({
-    bounds: saintRochBounds,
     noWrap: true,
     keepBuffer: 0,
     minZoom: 16,
@@ -45,7 +44,7 @@ onMounted(() => {
   zoom.getContainer()?.querySelector('.leaflet-control-zoom-out')?.setAttribute('aria-label', 'Dézoomer')
 
   // Keep the same neighborhood-scale minimum zoom on every viewport.
-  // Exterior areas stay pale pink, and navigation stops at the polygon edges.
+  // Exterior tiles are dark and desaturated; navigation stops at the polygon edges.
   const updateMinimumZoom = () => {
     if (!instance) return
     instance.invalidateSize({ pan: false })

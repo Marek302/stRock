@@ -1,6 +1,6 @@
 import { GridLayer, latLng, latLngBounds, type Coords, type DoneCallback } from 'leaflet'
 import boundary from '../data/saint-roch.json'
-import { intersectsRectangle, type Coordinate, type Ring } from './geometry'
+import { type Coordinate, type Ring } from './geometry'
 
 // Ville de Québec, jeu de données « Quartiers » (voir README pour la source).
 export const saintRochRings: Ring[] = boundary.geometry.coordinates.map((ring) =>
@@ -10,15 +10,18 @@ export const saintRochBounds = latLngBounds(
   saintRochRings[0]!.map(([longitude, latitude]) => latLng(latitude, longitude)),
 )
 
-/** Skip exterior tiles and clip boundary tiles to the official neighborhood. */
+/** One tile image: muted outside Saint-Roch, original colors inside its contour. */
 export class SaintRochLayer extends GridLayer {
   private projectedRings = new Map<number, Ring[]>()
 
   protected override createTile(coords: Coords, done: DoneCallback): HTMLElement {
-    const tile = document.createElement('canvas')
+    const tile = document.createElement('div')
+    const canvas = document.createElement('canvas')
     const size = this.getTileSize()
-    tile.width = size.x
-    tile.height = size.y
+    canvas.width = size.x
+    canvas.height = size.y
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;'
+    canvas.setAttribute('aria-hidden', 'true')
     const left = coords.x * size.x
     const top = coords.y * size.y
     let rings = this.projectedRings.get(coords.z)
@@ -29,11 +32,7 @@ export class SaintRochLayer extends GridLayer {
       }))
       this.projectedRings.set(coords.z, rings)
     }
-    if (!intersectsRectangle(rings, [left, top, left + size.x, top + size.y])) {
-      queueMicrotask(() => done(undefined, tile))
-      return tile
-    }
-    const context = tile.getContext('2d')
+    const context = canvas.getContext('2d')
     if (!context) {
       queueMicrotask(() => done(new Error('Canvas indisponible'), tile))
       return tile
@@ -48,6 +47,10 @@ export class SaintRochLayer extends GridLayer {
     }
     context.clip('evenodd')
     const image = new Image()
+    image.alt = ''
+    image.draggable = false
+    image.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;filter:grayscale(1) brightness(0.65);'
+    tile.append(image, canvas)
     image.onload = () => {
       context.drawImage(image, 0, 0, size.x, size.y)
       done(undefined, tile)

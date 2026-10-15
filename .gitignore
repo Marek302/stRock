@@ -1,0 +1,8 @@
+# Fichier d'environnement (contient des secrets)
+.env
+
+# Fichiers de sauvegarde
+*.bak
+
+.venv/
+serviceAccountKey.json

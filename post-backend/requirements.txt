@@ -1,0 +1,18 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+sqlmodel
+fastapi[standard]
+psycopg2
+pydantic
+aiofiles
+pillow
+firebase_admin
+PyJWT
+cryptography
+httpx
+torch 
+torchvision 
+torchaudio
+timm
+huggingface_hub
+-e ./external/fastapi-limiter

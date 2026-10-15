@@ -1,0 +1,152 @@
+services:
+  
+  nginx:
+    image: ${CI_REGISTRY_IMAGE}/nginx:$CI_COMMIT_SHA
+    container_name: 10books-proxy
+    ports:
+      - "443:443"
+    networks:
+      - 10books-website
+      - 10books-releases
+      - 10books-network
+    restart: unless-stopped
+    depends_on:
+      - books-api
+      - listing-api
+      - messaging-api
+    environment:
+      - SSL_CERT_PATH=${SSL_CERT_PATH}
+      - SSL_KEY_PATH=${SSL_KEY_PATH}
+    volumes:
+      - ${HOST_CERT_PATH}:${SSL_CERT_PATH}:ro
+      - ${HOST_KEY_PATH}:${SSL_KEY_PATH}:ro
+
+  website:
+    image: ${CI_REGISTRY_IMAGE}/website:$CI_COMMIT_SHA
+    container_name: 10books-website
+    networks:
+      - 10books-website
+    restart: unless-stopped 
+
+  releases-api:
+    image: ${CI_REGISTRY_IMAGE}/releases-api:$CI_COMMIT_SHA
+    container_name: 10books-releases
+    command: python -m fastapi run main.py
+    shm_size: '512mb'
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      RELEASES_DB_USER: ${RELEASES_DB_USER}               # NEW
+      RELEASES_DB_PASSWORD: ${RELEASES_DB_PASSWORD}       # NEW
+      RELEASES_DB_NAME: ${RELEASES_DB_NAME}               # NEW
+      RELEASES_PATH: ${RELEASES_PATH}                     # NEW
+      KEYSTORE_PATH: ${KEYSTORE_PATH}                     # NEW
+      KEYSTORE_ALIAS: ${KEYSTORE_ALIAS}                   # NEW  
+      KEYSTORE_PASSWORD: ${KEYSTORE_PASSWORD}             # NEW
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}         # NEW
+      FIREBASE_CERTS_URL: ${FIREBASE_CERTS_URL}           # NEW
+    networks:
+      - 10books-releases
+    volumes:
+      - ./data/2releases:${RELEASES_PATH}
+      - ${KEYSTORE_PATH}:/app/keystore.jks:ro
+    restart: unless-stopped 
+
+  books-api:
+    image: ${CI_REGISTRY_IMAGE}/books-api:$CI_COMMIT_SHA
+    container_name: 10books-books-api
+    command: python -m fastapi run main.py
+    environment:
+      GOOGLE_BOOKS_API_KEY: ${GOOGLE_BOOKS_API_KEY}
+    networks:
+      - 10books-network
+    restart: unless-stopped
+
+  listing-api:
+    image: ${CI_REGISTRY_IMAGE}/listing-api:$CI_COMMIT_SHA
+    container_name: 10books-listing-api
+    command: python -m fastapi run main.py
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      PHOTO_SAVE_ROOT: ${PHOTO_SAVE_ROOT}
+      ENVIRONMENT: ${ENVIRONMENT}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_CERTS_URL: ${FIREBASE_CERTS_URL}
+      INTERNAL_API_SECRET: ${INTERNAL_API_SECRET}
+    volumes:
+      - ./data/listing_photos:${PHOTO_SAVE_ROOT}
+    networks:
+      - 10books-network
+      - 10books-listing
+    depends_on:
+      - postgres-db
+    restart: unless-stopped
+
+  messaging-api:
+    image: ${CI_REGISTRY_IMAGE}/messaging-api:$CI_COMMIT_SHA
+    container_name: 10books-messaging-api
+    command: python -m fastapi run main.py
+    environment:
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_PORT: ${MONGO_PORT}
+      ENVIRONMENT: ${ENVIRONMENT}
+      PHOTO_SAVE_ROOT_MESSAGING: ${PHOTO_SAVE_ROOT_MESSAGING}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_CERTS_URL: ${FIREBASE_CERTS_URL}
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON}
+    volumes:
+      - ./data/messaging_photos:${PHOTO_SAVE_ROOT_MESSAGING}
+    networks:
+      - 10books-network
+      - 10books-messaging
+    depends_on:
+      - messaging-api-db
+    restart: unless-stopped
+    
+  postgres-db:
+    image: ${CI_REGISTRY_IMAGE}/postgres-db:$CI_COMMIT_SHA
+    container_name: postgres-db
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      RELEASES_DB_USER: ${RELEASES_DB_USER}               # NEW
+      RELEASES_DB_PASSWORD: ${RELEASES_DB_PASSWORD}       # NEW
+      RELEASES_DB_NAME: ${RELEASES_DB_NAME}               # NEW
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ENVIRONMENT: ${ENVIRONMENT}
+    networks:
+      - 10books-releases
+      - 10books-listing
+    restart: always
+    volumes:
+      - ./volumes/listing-data:/var/lib/postgresql
+
+  messaging-api-db:
+    image: ${CI_REGISTRY_IMAGE}/messaging-api-db:$CI_COMMIT_SHA
+    container_name: messaging-api-db
+    environment:
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
+    networks:
+      - 10books-messaging
+    restart: always
+    volumes:
+      - ./volumes/messaging-data:/data/db
+
+networks:
+  10books-website:
+  10books-network:
+  10books-listing:
+  10books-messaging:
+  10books-releases:
+
+volumes:
+  listing_data:
+  messaging_data:
