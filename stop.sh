@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker-compose down
+docker compose down
 
 docker rmi books-api:latest 2>/dev/null
 
