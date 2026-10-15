@@ -5,6 +5,8 @@ import { SaintRochLayer, saintRochBounds } from '../maps/saintRoch'
 import { constrainMovement } from '../maps/constrainMovement'
 import 'leaflet/dist/leaflet.css'
 
+const emit = defineEmits<{ ready: [map: Map] }>()
+
 const saintRochCenter: [number, number] = [46.8145, -71.2235]
 const initialZoom = 16
 
@@ -62,6 +64,7 @@ onMounted(() => {
   updateMinimumZoom()
   resizeObserver = new ResizeObserver(updateMinimumZoom)
   resizeObserver.observe(container.value)
+  emit('ready', instance)
 })
 
 onBeforeUnmount(() => {
