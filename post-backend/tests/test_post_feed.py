@@ -2,6 +2,7 @@
 
 Tests autonomes, sans Firebase ni base PostgreSQL externe.
 """
+from datetime import datetime, timezone
 from uuid import UUID
 
 import pytest
@@ -36,6 +37,7 @@ def feed():
 def add_post(session, number, title="Une publication du quartier", location="Saint-Roch", with_image=False):
     post = PostEntity(
         id=UUID(int=number),
+        created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
         user_id="u" * 28,
         title=title,
         description="Une description complète pour le fil des publications.",
@@ -57,7 +59,7 @@ def test_empty_feed(feed):
     assert response.json() == {"posts": [], "count": 0, "skip": 0, "limit": 20}
 
 
-def test_feed_contains_description_author_and_first_image(feed):
+def test_feed_contains_description_author_and_images(feed):
     client, session = feed
     post = add_post(session, 1, with_image=True)
     response = client.get("/api/v1/posts")
@@ -69,7 +71,7 @@ def test_feed_contains_description_author_and_first_image(feed):
     assert item["title"] == post.title
     assert item["description"] == post.description
     assert item["user_id"] == post.user_id
-    assert item["first_image"]["id"] == str(post.images[0].id)
+    assert item["images"][0]["id"] == str(post.images[0].id)
 
 
 def test_pagination_is_stable_and_allows_posts_without_images(feed):
@@ -78,7 +80,7 @@ def test_pagination_is_stable_and_allows_posts_without_images(feed):
         add_post(session, number)
     pages = [client.get("/api/v1/posts", params={"skip": skip, "limit": 1}).json() for skip in range(4)]
     assert [page["posts"][0]["id"] for page in pages[:3]] == [str(UUID(int=n)) for n in (1, 2, 3)]
-    assert all(page["posts"][0]["first_image"] is None for page in pages[:3])
+    assert all(page["posts"][0]["images"] == [] for page in pages[:3])
     assert pages[3] == {"posts": [], "count": 0, "skip": 3, "limit": 1}
 
 

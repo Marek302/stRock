@@ -22,7 +22,7 @@ async def upload_post_image(
     image: UploadFile = File(...),
     image_service: ImageService = Depends(ImageService.get_image_service),
     file_service: FileService = Depends(FileService.get_file_service),
-    token: FirebaseUserToken = Depends(with_claims(["post:update:self"]))
+    token: FirebaseUserToken = Depends(with_claims([]))
 ) -> Response:
     """Upload une photo pour une publication. En-têtes de debug : X-NSFW-Probability, X-NSFW-Threshold, X-NSFW-Detection-Enabled."""
     image_entity: ImageEntity = await image_service.get_by_id(image_id=image_id)

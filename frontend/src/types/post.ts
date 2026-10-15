@@ -4,16 +4,19 @@ export interface PostLocation {
   longitude: number | null
 }
 
-export interface PostSummary {
-  id: string
+export interface CommunityPost extends PostLocation {
   user_id: string
   title: string
   description: string
-  first_image: { id: string } | null
+  content_type: 'publication' | 'event' | 'urban_alert' | 'safety_alert'
+  location: string | null
+  starts_at: string | null
+  ends_at: string | null
+  images: { id: string; image_index: number; post_id: string }[]
 }
 
 export interface PostListResponse {
-  posts: PostSummary[]
+  posts: CommunityPost[]
   count: number
   skip: number
   limit: number
@@ -25,4 +28,7 @@ export interface PostItem {
   title: string
   description: string
   imageUrl?: string
+  location?: string
+  startsAt?: string
+  endsAt?: string
 }

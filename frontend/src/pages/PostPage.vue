@@ -15,6 +15,9 @@ const { posts, isLoading, error, hasMore, reload, loadMore, loadOnScroll } = use
         :description="post.description"
         :user-id="post.userId"
         :image-url="post.imageUrl"
+        :location="post.location"
+        :starts-at="post.startsAt"
+        :ends-at="post.endsAt"
       />
       <div v-if="isLoading || error || !hasMore" class="feed-status p-6 text-center text-slate-600">
         <p v-if="isLoading" role="status">Chargement des publications…</p>
@@ -24,7 +27,7 @@ const { posts, isLoading, error, hasMore, reload, loadMore, loadOnScroll } = use
             Réessayer
           </button>
         </div>
-        <p v-else-if="!hasMore" role="status">Aucune publication pour le moment.</p>
+        <p v-else-if="!posts.length" role="status">Aucune publication pour le moment.</p>
       </div>
     </div>
   </main>
@@ -32,15 +35,22 @@ const { posts, isLoading, error, hasMore, reload, loadMore, loadOnScroll } = use
 
 <style scoped>
 .posts-page {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: calc(72px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px));
 }
 
 .post-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 16px 24px;
   height: 100%;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scroll-snap-type: y proximity;
+}
+
+.post-feed > * {
+  flex-shrink: 0;
 }
 
 .feed-status {

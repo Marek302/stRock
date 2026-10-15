@@ -1,4 +1,4 @@
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { API_BASE_URL } from '../api/client'
 import { getPosts } from '../api/posts'
 import type { PostItem } from '../types/post'
@@ -9,6 +9,7 @@ export function usePosts() {
   const error = ref<string | null>(null)
   const hasMore = ref(true)
   let nextSkip = 0
+  const controller = new AbortController()
 
   async function loadPosts(reset = false) {
     if (isLoading.value) return
@@ -17,20 +18,25 @@ export function usePosts() {
     error.value = null
 
     try {
-      const result = await getPosts(reset ? 0 : nextSkip)
+      const result = await getPosts(reset ? 0 : nextSkip, 20, controller.signal)
       const items = result.posts.map((post) => ({
         id: post.id,
         title: post.title,
         description: post.description,
         userId: post.user_id,
-        imageUrl: post.first_image ? `${API_BASE_URL}/images/${post.first_image.id}` : undefined,
+        location: post.location ?? undefined,
+        startsAt: post.starts_at ?? undefined,
+        endsAt: post.ends_at ?? undefined,
+        imageUrl: post.images[0] ? `${API_BASE_URL}/images/${post.images[0].id}` : undefined,
       }))
 
       posts.value = reset ? items : [...posts.value, ...items]
       nextSkip = result.skip + result.posts.length
       hasMore.value = result.posts.length === result.limit && result.limit > 0
     } catch (cause) {
-      error.value = cause instanceof Error ? cause.message : 'Impossible de charger les publications.'
+      if (!controller.signal.aborted) {
+        error.value = cause instanceof Error ? cause.message : 'Impossible de charger les publications.'
+      }
     } finally {
       isLoading.value = false
     }
@@ -53,6 +59,7 @@ export function usePosts() {
   }
 
   onMounted(reload)
+  onBeforeUnmount(() => controller.abort())
 
   return { posts, isLoading, error, hasMore, reload, loadMore, loadOnScroll }
 }
