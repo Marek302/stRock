@@ -1,9 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, type User, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, type User, } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import firebaseConfig from './config.json';
-import { getAnalytics } from 'firebase/analytics';
-
 export interface UserProfile {
   uid: string;
   email: string;
@@ -19,8 +17,6 @@ export interface AuthUser {
 }
 
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-console.log(app)
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
