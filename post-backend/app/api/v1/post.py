@@ -13,9 +13,7 @@ from app.services.post_service import PostService
 from app.mappers.post_mapper import PostMapper
 from app.schemas.create.post_create import PostCreate
 from app.schemas.summary.post_location import PostLocation
-from app.schemas.update.user_reputation_update import UserReputationUpdate
 from app.core.security import with_claims, optional_with_claims
-import app.core.enums as enums
 from app.services.messaging_service import MessagingService
 
 router = APIRouter(redirect_slashes=False)

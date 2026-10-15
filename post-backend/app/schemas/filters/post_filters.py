@@ -35,6 +35,7 @@ def get_post_filters(
     ),
     search: Optional[str] = Query(None),
     location: Optional[str] = Query(None),
+    exclude_post_ids: Optional[List[str]] = Query(None),
 ) -> PostFilters:
     """Dependency that builds PostFilters from query params (supports list for exclude_post_ids)."""
     # Support comma-separated in first element if client sends one string

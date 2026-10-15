@@ -9,10 +9,7 @@ from sqlalchemy import Column, SmallInteger, Text
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlmodel import Field, SQLModel, Relationship
 
-from app.models.damage_state_entity import DamageStateEntity
 from app.models.image_entity import ImageEntity
-from app.models.shipping_offer_entity import ShippingOfferEntity
-from app.models.sold_state_entity import SoldStateEntity
 
 
 USER_ID_LENGTH = 28

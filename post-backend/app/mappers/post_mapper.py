@@ -10,9 +10,6 @@ from app.schemas.create.post_create import PostCreate
 from app.schemas.post import Post
 from app.schemas.summary.post_list_response import PostListResponse
 from app.schemas.summary.post_response_summary import PostResponseSummary
-from app.schemas.damage_state import DamageState
-from app.schemas.sold_state import SoldState
-from app.schemas.shipping_offer import ShippingOffer
 from app.schemas.image import Image
 
 class PostMapper:
@@ -77,10 +74,10 @@ class PostMapper:
             id=entity.id,
             user_id=entity.user_id,
             title=entity.title,
+            description=entity.description,
             location=entity.location,
             latitude=entity.latitude,
             longitude=entity.longitude,
-            is_annoted=entity.is_annoted,
             first_image=Image(
                 id=entity.images[0].id,
                 image_path=entity.images[0].image_path,

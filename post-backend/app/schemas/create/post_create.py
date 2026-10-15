@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.create.image_create import ImageCreate
 import app.schemas.post as post
-import app.core.enums as enums
 
 class PostCreate(BaseModel):
     """Objet de création d'un Post"""
@@ -15,7 +14,7 @@ class PostCreate(BaseModel):
     title: str = Field(min_length=post.TITLE_MIN_LENGTH,
                        max_length=post.TITLE_MAX_LENGTH)
     damage_state_id: uuid.UUID = Field()
-    sold_state_id: uuid.UUID = Field(default=enums.SoldStateId.DRAFT.value)
+    sold_state_id: uuid.UUID = Field(default=uuid.UUID("d8a683fb-f74a-41ee-af5a-59bc574a7b15"))
     description: str = Field(min_length=post.DESCRIPTION_MIN_LENGTH,
                              max_length=post.DESCRIPTION_MAX_LENGTH)
     price: float = Field(gt=post.PRICE_MIN_VALUE, lt=post.PRICE_MAX_VALUE)

@@ -10,9 +10,6 @@ from sqlmodel import Session, select, update, col
 from fastapi import Depends
 from app.core.db import get_session
 from app.models.post_entity import PostEntity
-from app.models.post_view_entity import PostViewEntity
-from app.models.shipping_offer_entity import ShippingOfferEntity
-from app.core.enums import SoldStateId
 from app.schemas.create.post_create import PostCreate
 from app.schemas.summary.post_location import PostLocation
 from app.mappers.post_mapper import PostMapper
@@ -88,8 +85,6 @@ class PostService:
         """Récupération de multiples posts avec filtres"""
         statement = select(PostEntity)
         filters = []
-        filters.append(col(PostEntity.sold_state_id) != SoldStateId.DRAFT.value)
-        filters.append(col(PostEntity.buyer).is_(None))
         if exclude_post_ids:
             try:
                 from uuid import UUID
@@ -114,6 +109,7 @@ class PostService:
             filters.append(col(PostEntity.seller_rep) >= min_seller_rep)
 
         if delivery_offer is not None:
+            from app.models.shipping_offer_entity import ShippingOfferEntity
             statement = statement.join(ShippingOfferEntity)
             filters.append(col(ShippingOfferEntity.delivery_offer) == delivery_offer)
 
@@ -128,6 +124,9 @@ class PostService:
         elif sort_by_price == "desc":
             statement = statement.order_by(PostEntity.price.desc())
 
+        if sort_by_price is None:
+            statement = statement.order_by(PostEntity.id)
+
         statement = statement.offset(skip).limit(limit)
         return self.session.exec(statement).all()
 
@@ -137,6 +136,8 @@ class PostService:
         Returns True if this was a new view, False if user had already viewed.
         Uses a savepoint so a duplicate insert only rolls back the savepoint, not the transaction.
         """
+        from app.models.post_view_entity import PostViewEntity
+
         post = self.get_by_id(post_id)
         try:
             with self.session.begin_nested():

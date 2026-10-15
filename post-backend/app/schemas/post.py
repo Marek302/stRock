@@ -7,10 +7,7 @@
 import uuid
 from pydantic import BaseModel, Field, field_validator
 
-from app.schemas.damage_state import DamageState
 from app.schemas.image import Image
-from app.schemas.shipping_offer import ShippingOffer
-from app.schemas.sold_state import SoldState
 
 USER_ID_LENGTH = 28
 BOOK_ID_LENGTH = 12

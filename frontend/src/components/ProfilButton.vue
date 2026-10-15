@@ -26,12 +26,13 @@ const router = useRouter()
   place-items: center;
   padding: 0;
   color: #334155;
+  background: rgb(231 243 255 / 75%);
   position: fixed;
   z-index: 1000;
   top: max(16px, env(safe-area-inset-top, 0px));
   right: max(16px, env(safe-area-inset-right, 0px));
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   cursor: pointer;
   transform: scale(1);
@@ -77,8 +78,8 @@ const router = useRouter()
   .profil-button {
     top: 18px;
     right: max(24px, env(safe-area-inset-right, 0px));
-    width: 80px;
-    height: 80px;
+    width: 64px;
+    height: 64px;
   }
 }
 </style>
