@@ -12,6 +12,7 @@ from app.schemas.filters.post_filters import PostFilters, get_post_filters
 from app.services.post_service import PostService
 from app.mappers.post_mapper import PostMapper
 from app.schemas.create.post_create import PostCreate
+from app.schemas.summary.post_location import PostLocation
 from app.schemas.update.user_reputation_update import UserReputationUpdate
 from app.core.security import with_claims, optional_with_claims
 import app.core.enums as enums
@@ -33,6 +34,14 @@ async def get_all_posts(
         skip=filters.skip,
         limit=filters.limit
     )
+
+@router.get("/locations", response_model=list[PostLocation])
+async def get_post_locations(
+    service: PostService = Depends(PostService.get_post_service)
+):
+    """Liste tous les posts avec uniquement leur ID, latitude et longitude."""
+    return service.list_locations()
+
 
 @router.post("", status_code=201)
 async def create_post(

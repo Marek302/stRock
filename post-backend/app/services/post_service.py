@@ -14,6 +14,7 @@ from app.models.post_view_entity import PostViewEntity
 from app.models.shipping_offer_entity import ShippingOfferEntity
 from app.core.enums import SoldStateId
 from app.schemas.create.post_create import PostCreate
+from app.schemas.summary.post_location import PostLocation
 from app.mappers.post_mapper import PostMapper
 from app.services.service_exceptions import NotFoundException
 from app.services.books_api_client import fetch_volume_categories
@@ -61,6 +62,14 @@ class PostService:
         """Delete post by id"""
         self.session.delete(entity)
         self.session.commit()
+
+    def list_locations(self) -> List[PostLocation]:
+        """Récupère uniquement l'ID et les coordonnées de tous les posts."""
+        statement = select(PostEntity.id, PostEntity.latitude, PostEntity.longitude)
+        return [
+            PostLocation.model_validate(row)
+            for row in self.session.exec(statement).all()
+        ]
 
     def list_all(
         self,
