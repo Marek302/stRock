@@ -12,7 +12,7 @@ class Conversation(BaseModel):
     """Objet de domaine"""
     id: UUID
     participants: List[str] = Field(min_length=2, max_length=2)
-    listing_id: UUID
+    post_id: UUID
     created_at: datetime.datetime
     last_message: Optional[LastMessage] = None
     other_participant_firebase_uid: Optional[str] = Field(None, min_length=28, max_length=28)

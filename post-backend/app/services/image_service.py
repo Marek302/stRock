@@ -2,7 +2,7 @@
 Fichier du service ImageService
 """
 import uuid
-from fastapi import Depends 
+from fastapi import Depends
 from sqlmodel import Session, select
 from app.core.db import get_session
 from app.models.image_entity import ImageEntity
@@ -24,22 +24,22 @@ class ImageService:
         return ImageService(session)
 
     async def get_by_id(self, image_id: uuid.UUID) -> ImageEntity:
-        """Retourne ImageEntity par son index et listing_id"""
+        """Retourne ImageEntity par son index et post_id"""
         statement = select(ImageEntity).where(
             ImageEntity.id == image_id
         )
         result = self.session.exec(statement)
         image = result.first()
         if not image:
-            raise NotFoundException(f"""image with id {image_id} 
+            raise NotFoundException(f"""image with id {image_id}
                                     was not found.""")
         return image
-    
+
     async def delete_entity(self, entity: ImageEntity) -> None:
         """Supprime une image par son id"""
         await self.session.delete(entity)
         await self.session.commit()
-    
 
-    
-    
+
+
+

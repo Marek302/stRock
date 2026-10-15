@@ -1,6 +1,6 @@
 """
 Client to fetch book volume data (e.g. categories) from the Books API.
-Used at listing creation to store book_categories for recommendations.
+Used at post creation to store book_categories for recommendations.
 """
 import logging
 import os

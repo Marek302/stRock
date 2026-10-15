@@ -1,6 +1,6 @@
 # pylint: disable=protected-access
 """
-Tests d'intégration pour les routes de l'API Listing.
+Tests d'intégration pour les routes de l'API Post.
 """
 from uuid import UUID, uuid4
 from dataclasses import asdict
@@ -10,12 +10,12 @@ import jwt
 from conftest import ALGORITHM, SECRET_KEY
 from app.core.enums import DamageStateId, SoldStateId, ShippingOfferId
 from app.models.image_entity import ImageEntity
-from app.models.listing_entity import ListingEntity
+from app.models.post_entity import PostEntity
 from app.models.damage_state_entity import DamageStateEntity
 from app.models.shipping_offer_entity import ShippingOfferEntity
 from app.models.sold_state_entity import SoldStateEntity
 from app.schemas.create.image_create import ImageCreate
-from app.schemas.create.listing_create import ListingCreate
+from app.schemas.create.post_create import PostCreate
 from app.schemas.firebase_user_token import FirebaseUserToken
 
 
@@ -24,7 +24,7 @@ from app.schemas.firebase_user_token import FirebaseUserToken
 @pytest.fixture
 def reference_entities(db_session):
     """Crée l'intégralité des états possibles en base de données."""
-    
+
     # 1. Damage States
     damage_entities = {
         "comme_neuf": DamageStateEntity(id=UUID(DamageStateId.COMME_NEUF.value), name="Comme neuf"),
@@ -59,7 +59,7 @@ def reference_entities(db_session):
         *sold_entities.values(),
         *shipping_entities.values()
     ]
-    
+
     db_session.add_all(all_entities)
     db_session.commit()
 
@@ -71,22 +71,22 @@ def reference_entities(db_session):
     }
 
 
-def insert_listing(db_session, vendor_id, entities, **overrides):
-    """Insère un listing en base en utilisant les valeurs par défaut clés."""
-    listing_id = uuid4()
+def insert_post(db_session, user_id, entities, **overrides):
+    """Insère un post en base en utilisant les valeurs par défaut clés."""
+    post_id = uuid4()
     images = []
 
     for i in range(3):
         image_id = uuid4()
         images.append(ImageEntity(
                 id= image_id,
-                image_path=f"/{vendor_id}/{listing_id}/{image_id}",
+                image_path=f"/{user_id}/{post_id}/{image_id}",
                 image_index= i,
-                listing_id= listing_id 
+                post_id= post_id
             ))
     data = {
-        "id": listing_id,
-        "vendor_id": vendor_id,
+        "id": post_id,
+        "user_id": user_id,
         "book_id": "BOOK12345678",
         "title": "Titre",
         "description": "Description suffisamment longue.",
@@ -100,11 +100,11 @@ def insert_listing(db_session, vendor_id, entities, **overrides):
         "buyer": overrides.get("buyer"),
         "images": images
     }
-    listing = ListingEntity(**data)
-    db_session.add(listing)
+    post = PostEntity(**data)
+    db_session.add(post)
     db_session.commit()
-    db_session.refresh(listing)
-    return listing
+    db_session.refresh(post)
+    return post
 
 def get_mock_firebase_user(uid: str = "v"*28, role: str = "basic_user"):
     return FirebaseUserToken(
@@ -114,10 +114,10 @@ def get_mock_firebase_user(uid: str = "v"*28, role: str = "basic_user"):
         picture="http://example.com/pic.png",
         role=role,
         permissions=[
-            "listing:create:self",
-            "listing:update:self",
-            "listing:read:self",
-            "listing:delete:self",
+            "post:create:self",
+            "post:update:self",
+            "post:read:self",
+            "post:delete:self",
             "admin:update:all" # Si vous testez la route réputation
         ],
         email_verified=True,
@@ -130,34 +130,34 @@ def get_mock_firebase_user(uid: str = "v"*28, role: str = "basic_user"):
     )
 
 MOCK_JWT = jwt.encode(payload=asdict(get_mock_firebase_user()), key=SECRET_KEY, algorithm=ALGORITHM)
-MOCK_JWT_OTHER_USER = jwt.encode(payload=asdict(get_mock_firebase_user(uid="b"*28)), 
+MOCK_JWT_OTHER_USER = jwt.encode(payload=asdict(get_mock_firebase_user(uid="b"*28)),
                                  key=SECRET_KEY, algorithm=ALGORITHM)
 
-def test_get_listings_with_filters(client, db_session, reference_entities):
-    """Vérifie la récupération des listings avec des filtres appliqués."""
+def test_get_posts_with_filters(client, db_session, reference_entities):
+    """Vérifie la récupération des posts avec des filtres appliqués."""
     states = {
         "damage": reference_entities["damage"]["comme_neuf"],
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"]
     }
-    listing_a = insert_listing(
+    post_a = insert_post(
         db_session,
-        vendor_id="g"*28,
+        user_id="g"*28,
         entities=states,
         location="Montreal",
         seller_rep=8,
         is_annoted=True,
     )
-    insert_listing(
+    insert_post(
         db_session,
-        vendor_id="v"*28,
+        user_id="v"*28,
         entities=states,
         location="Quebec",
         seller_rep=4,
         is_annoted=False,
     )
     response = client.get(
-        "/api/v1/listings",
+        "/api/v1/posts",
         params={
             "delivery_offer": True,
             "location": "Montreal",
@@ -169,13 +169,13 @@ def test_get_listings_with_filters(client, db_session, reference_entities):
     assert response.status_code == 200
     payload = response.json()
     assert payload["count"] >= 1
-    assert payload["listings"][0]["id"] == str(listing_a.id)
-    assert payload["listings"][0]["seller_rep"] == 8
+    assert payload["posts"][0]["id"] == str(post_a.id)
+    assert payload["posts"][0]["seller_rep"] == 8
 
-def test_create_listing_and_get_by_id(client, reference_entities):
-    """Vérifie la création d'un listing et sa récupération par ID."""
+def test_create_post_and_get_by_id(client, reference_entities):
+    """Vérifie la création d'un post et sa récupération par ID."""
     entities = reference_entities
-    payload = ListingCreate(
+    payload = PostCreate(
         book_id="BOOK00000001",
         title="Nouvelle annonce",
         description= "Une description détaillée.",
@@ -188,21 +188,21 @@ def test_create_listing_and_get_by_id(client, reference_entities):
         buyer=None,
         images=[ImageCreate(image_index=0)]
     ).model_dump(mode='json')
-    
+
     print(payload)
-    create_resp = client.post("/api/v1/listings", json=payload, headers={
+    create_resp = client.post("/api/v1/posts", json=payload, headers={
         "Authorization": "Bearer " + MOCK_JWT
         })
     assert create_resp.status_code == 201
-    listing = create_resp.json()["listing"]
+    post = create_resp.json()["post"]
 
-    get_resp = client.get(f"/api/v1/listings/{listing['id']}")
+    get_resp = client.get(f"/api/v1/posts/{post['id']}")
 
     assert get_resp.status_code == 200
-    assert get_resp.json()["vendor_id"] == get_mock_firebase_user().uid
+    assert get_resp.json()["user_id"] == get_mock_firebase_user().uid
 
 
-def test_get_listings_by_user_and_update_reputation(
+def test_get_posts_by_user_and_update_reputation(
     client, db_session, reference_entities
 ):
     """Vérifie la récupération par utilisateur et la mise à jour de la réputation."""
@@ -211,46 +211,46 @@ def test_get_listings_by_user_and_update_reputation(
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"]
     }
-    vendor_id = "v" * 28
-    listing_one = insert_listing(
+    user_id = "v" * 28
+    post_one = insert_post(
         db_session,
-        vendor_id=vendor_id,
+        user_id=user_id,
         entities=states,
         buyer="b"*28,
         seller_rep=6,
     )
-    insert_listing(
+    insert_post(
         db_session,
-        vendor_id=vendor_id,
+        user_id=user_id,
         entities=states,
         seller_rep=6,
         buyer=None
     )
 
-    user_resp = client.get(f"/api/v1/listings/user/{vendor_id}")
+    user_resp = client.get(f"/api/v1/posts/user/{user_id}")
     assert user_resp.status_code == 200
     assert user_resp.json()["count"] == 2
 
     patch_resp = client.patch(
-        f"/api/v1/listings/vendor/{vendor_id}/reputation",
+        f"/api/v1/posts/user/{user_id}/reputation",
         json={"seller_rep": 9},
         headers={"Authorization": "Bearer " + MOCK_JWT}
     )
     assert patch_resp.status_code == 200
     assert patch_resp.json()["updated_count"] == 2
 
-    refreshed = client.get(f"/api/v1/listings/{listing_one.id}")
+    refreshed = client.get(f"/api/v1/posts/{post_one.id}")
     assert refreshed.status_code == 200
     assert refreshed.json()["seller_rep"] == 9
 
 
-def test_get_listing_sold_status(client, reference_entities):
+def test_get_post_sold_status(client, reference_entities):
     entities = reference_entities
 
-    payload = ListingCreate(
+    payload = PostCreate(
         book_id="BOOK00000002",
         title="Annonce vendue ?",
-        description="Test sold status listing" *2,
+        description="Test sold status post" *2,
         price=29.99,
         damage_state_id=entities["damage"]["comme_neuf"].id,
         sold_state_id=entities["sold"]["available"].id,
@@ -262,15 +262,15 @@ def test_get_listing_sold_status(client, reference_entities):
     ).model_dump(mode="json")
 
     create_resp = client.post(
-        "/api/v1/listings",
+        "/api/v1/posts",
         json=payload,
         headers={"Authorization": "Bearer " + MOCK_JWT}
     )
     assert create_resp.status_code == 201
 
-    listing_id = create_resp.json()["listing"]["id"]
+    post_id = create_resp.json()["post"]["id"]
 
-    response = client.get(f"/api/v1/listings/{listing_id}/sold-status")
+    response = client.get(f"/api/v1/posts/{post_id}/sold-status")
 
     assert response.status_code == 200
     body = response.json()
@@ -279,13 +279,13 @@ def test_get_listing_sold_status(client, reference_entities):
     assert body["status"] == entities["sold"]["available"].name
 
 
-def test_delete_listing_as_owner(client, reference_entities):
+def test_delete_post_as_owner(client, reference_entities):
     entities = reference_entities
 
-    payload = ListingCreate(
+    payload = PostCreate(
         book_id="BOOK00000003",
         title="Annonce à supprimer",
-        description="Delete test listing"*2,
+        description="Delete test post"*2,
         price=15.00,
         damage_state_id=entities["damage"]["comme_neuf"].id,
         sold_state_id=entities["sold"]["available"].id,
@@ -297,32 +297,32 @@ def test_delete_listing_as_owner(client, reference_entities):
     ).model_dump(mode="json")
 
     create_resp = client.post(
-        "/api/v1/listings",
+        "/api/v1/posts",
         json=payload,
         headers={"Authorization": "Bearer " + MOCK_JWT}
     )
     assert create_resp.status_code == 201
 
-    listing_id = create_resp.json()["listing"]["id"]
+    post_id = create_resp.json()["post"]["id"]
 
     delete_resp = client.delete(
-        f"/api/v1/listings/{listing_id}",
+        f"/api/v1/posts/{post_id}",
         headers={"Authorization": "Bearer " + MOCK_JWT}
     )
 
     assert delete_resp.status_code == 204
-    
-    get_resp = client.get(f"/api/v1/listings/{listing_id}")
+
+    get_resp = client.get(f"/api/v1/posts/{post_id}")
     assert get_resp.status_code == 404
 
 
-def test_delete_listing_not_owner_forbidden(client, reference_entities):
+def test_delete_post_not_owner_forbidden(client, reference_entities):
     entities = reference_entities
 
-    payload = ListingCreate(
+    payload = PostCreate(
         book_id="BOOK00000004",
         title="Annonce protégée",
-        description="Forbidden delete listing"*2,
+        description="Forbidden delete post"*2,
         price=10.00,
         damage_state_id=entities["damage"]["comme_neuf"].id,
         sold_state_id=entities["sold"]["available"].id,
@@ -334,24 +334,24 @@ def test_delete_listing_not_owner_forbidden(client, reference_entities):
     ).model_dump(mode="json")
 
     create_resp = client.post(
-        "/api/v1/listings",
+        "/api/v1/posts",
         json=payload,
         headers={"Authorization": "Bearer " + MOCK_JWT}
     )
     assert create_resp.status_code == 201
 
-    listing_id = create_resp.json()["listing"]["id"]
+    post_id = create_resp.json()["post"]["id"]
 
     delete_resp = client.delete(
-        f"/api/v1/listings/{listing_id}",
+        f"/api/v1/posts/{post_id}",
         headers={"Authorization": "Bearer " + MOCK_JWT_OTHER_USER}
     )
 
     assert delete_resp.status_code == 403
-    assert "do not own the listing" in delete_resp.text
+    assert "do not own the post" in delete_resp.text
 
 
-# ----- Tests pour GET /listings/{id} et incrément des vues -----
+# ----- Tests pour GET /posts/{id} et incrément des vues -----
 
 def _mk_jwt(uid: str) -> str:
     """Génère un JWT pour un uid donné."""
@@ -362,59 +362,59 @@ def _mk_jwt(uid: str) -> str:
     )
 
 
-def test_get_listing_without_auth_returns_listing_no_view_increment(
+def test_get_post_without_auth_returns_post_no_view_increment(
     client, db_session, reference_entities
 ):
-    """Sans auth, le listing est retourné et view_count reste 0."""
+    """Sans auth, le post est retourné et view_count reste 0."""
     states = {
         "damage": reference_entities["damage"]["comme_neuf"],
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"],
     }
-    listing = insert_listing(
+    post = insert_post(
         db_session,
-        vendor_id="v" * 28,
+        user_id="v" * 28,
         entities=states,
     )
-    assert listing.view_count == 0
+    assert post.view_count == 0
 
-    resp = client.get(f"/api/v1/listings/{listing.id}")
+    resp = client.get(f"/api/v1/posts/{post.id}")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["id"] == str(listing.id)
+    assert data["id"] == str(post.id)
     assert data["view_count"] == 0
 
     # Vérifier en base que view_count n'a pas changé
-    db_session.refresh(listing)
-    assert listing.view_count == 0
+    db_session.refresh(post)
+    assert post.view_count == 0
 
 
-def test_get_listing_with_auth_other_user_increments_view_once(
+def test_get_post_with_auth_other_user_increments_view_once(
     client, db_session, reference_entities
 ):
-    """Avec auth (user != vendor), view_count s'incrémente à 1."""
+    """Avec auth (user != user), view_count s'incrémente à 1."""
     states = {
         "damage": reference_entities["damage"]["comme_neuf"],
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"],
     }
-    vendor_id = "v" * 28
+    user_id = "v" * 28
     viewer_id = "b" * 28
-    listing = insert_listing(db_session, vendor_id=vendor_id, entities=states)
-    assert listing.view_count == 0
+    post = insert_post(db_session, user_id=user_id, entities=states)
+    assert post.view_count == 0
 
     resp = client.get(
-        f"/api/v1/listings/{listing.id}",
+        f"/api/v1/posts/{post.id}",
         headers={"Authorization": f"Bearer {_mk_jwt(viewer_id)}"},
     )
     assert resp.status_code == 200
     assert resp.json()["view_count"] == 1
 
-    db_session.refresh(listing)
-    assert listing.view_count == 1
+    db_session.refresh(post)
+    assert post.view_count == 1
 
 
-def test_get_listing_vendor_viewing_own_listing_no_increment(
+def test_get_post_user_viewing_own_post_no_increment(
     client, db_session, reference_entities
 ):
     """Le vendeur qui consulte sa propre annonce : view_count ne s'incrémente pas."""
@@ -423,22 +423,22 @@ def test_get_listing_vendor_viewing_own_listing_no_increment(
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"],
     }
-    vendor_id = "v" * 28
-    listing = insert_listing(db_session, vendor_id=vendor_id, entities=states)
-    assert listing.view_count == 0
+    user_id = "v" * 28
+    post = insert_post(db_session, user_id=user_id, entities=states)
+    assert post.view_count == 0
 
     resp = client.get(
-        f"/api/v1/listings/{listing.id}",
-        headers={"Authorization": f"Bearer {_mk_jwt(vendor_id)}"},
+        f"/api/v1/posts/{post.id}",
+        headers={"Authorization": f"Bearer {_mk_jwt(user_id)}"},
     )
     assert resp.status_code == 200
     assert resp.json()["view_count"] == 0
 
-    db_session.refresh(listing)
-    assert listing.view_count == 0
+    db_session.refresh(post)
+    assert post.view_count == 0
 
 
-def test_get_listing_same_user_twice_increments_once(
+def test_get_post_same_user_twice_increments_once(
     client, db_session, reference_entities
 ):
     """Même user consulte 2 fois : view_count ne s'incrémente qu'une fois."""
@@ -447,23 +447,23 @@ def test_get_listing_same_user_twice_increments_once(
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"],
     }
-    vendor_id = "v" * 28
+    user_id = "v" * 28
     viewer_id = "c" * 28
-    listing = insert_listing(db_session, vendor_id=vendor_id, entities=states)
+    post = insert_post(db_session, user_id=user_id, entities=states)
 
     for _ in range(2):
         resp = client.get(
-            f"/api/v1/listings/{listing.id}",
+            f"/api/v1/posts/{post.id}",
             headers={"Authorization": f"Bearer {_mk_jwt(viewer_id)}"},
         )
         assert resp.status_code == 200
 
     assert resp.json()["view_count"] == 1
-    db_session.refresh(listing)
-    assert listing.view_count == 1
+    db_session.refresh(post)
+    assert post.view_count == 1
 
 
-def test_get_listing_two_different_users_increments_twice(
+def test_get_post_two_different_users_increments_twice(
     client, db_session, reference_entities
 ):
     """Deux users différents consultent : view_count = 2."""
@@ -472,41 +472,41 @@ def test_get_listing_two_different_users_increments_twice(
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"],
     }
-    vendor_id = "v" * 28
-    listing = insert_listing(db_session, vendor_id=vendor_id, entities=states)
+    user_id = "v" * 28
+    post = insert_post(db_session, user_id=user_id, entities=states)
 
     resp1 = client.get(
-        f"/api/v1/listings/{listing.id}",
+        f"/api/v1/posts/{post.id}",
         headers={"Authorization": f"Bearer {_mk_jwt('a' * 28)}"},
     )
     assert resp1.status_code == 200
     assert resp1.json()["view_count"] == 1
 
     resp2 = client.get(
-        f"/api/v1/listings/{listing.id}",
+        f"/api/v1/posts/{post.id}",
         headers={"Authorization": f"Bearer {_mk_jwt('b' * 28)}"},
     )
     assert resp2.status_code == 200
     assert resp2.json()["view_count"] == 2
 
-    db_session.refresh(listing)
-    assert listing.view_count == 2
+    db_session.refresh(post)
+    assert post.view_count == 2
 
 
-def test_get_listing_not_found_404(client, reference_entities):
+def test_get_post_not_found_404(client, reference_entities):
     """ID invalide ou inexistant retourne 404."""
     fake_id = "00000000-0000-0000-0000-000000000001"
-    resp = client.get(f"/api/v1/listings/{fake_id}")
+    resp = client.get(f"/api/v1/posts/{fake_id}")
     assert resp.status_code == 404
 
 
-def test_get_listing_invalid_uuid_404(client):
+def test_get_post_invalid_uuid_404(client):
     """ID mal formé (non-UUID) retourne 404."""
-    resp = client.get("/api/v1/listings/not-a-uuid")
+    resp = client.get("/api/v1/posts/not-a-uuid")
     assert resp.status_code == 404
 
 
-def test_get_listing_response_includes_view_count_and_full_schema(
+def test_get_post_response_includes_view_count_and_full_schema(
     client, db_session, reference_entities
 ):
     """La réponse contient view_count et les champs attendus."""
@@ -515,29 +515,29 @@ def test_get_listing_response_includes_view_count_and_full_schema(
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"],
     }
-    listing = insert_listing(
+    post = insert_post(
         db_session,
-        vendor_id="v" * 28,
+        user_id="v" * 28,
         entities=states,
     )
 
-    resp = client.get(f"/api/v1/listings/{listing.id}")
+    resp = client.get(f"/api/v1/posts/{post.id}")
     assert resp.status_code == 200
     data = resp.json()
 
     assert "view_count" in data
     assert data["view_count"] >= 0
-    assert data["id"] == str(listing.id)
-    assert data["vendor_id"] == listing.vendor_id
-    assert data["title"] == listing.title
-    assert data["price"] == listing.price
+    assert data["id"] == str(post.id)
+    assert data["user_id"] == post.user_id
+    assert data["title"] == post.title
+    assert data["price"] == post.price
     assert "images" in data
     assert "damage_state" in data
     assert "sold_state" in data
     assert "shipping_offer" in data
 
 
-def test_get_listing_with_invalid_token_treated_as_no_auth(
+def test_get_post_with_invalid_token_treated_as_no_auth(
     client, db_session, reference_entities
 ):
     """Token invalide ou expiré : pas d'auth, view_count reste 0."""
@@ -546,18 +546,18 @@ def test_get_listing_with_invalid_token_treated_as_no_auth(
         "sold": reference_entities["sold"]["available"],
         "shipping": reference_entities["shipping"]["ship"],
     }
-    listing = insert_listing(
+    post = insert_post(
         db_session,
-        vendor_id="v" * 28,
+        user_id="v" * 28,
         entities=states,
     )
 
     resp = client.get(
-        f"/api/v1/listings/{listing.id}",
+        f"/api/v1/posts/{post.id}",
         headers={"Authorization": "Bearer invalid-or-expired-token"},
     )
     assert resp.status_code == 200
     assert resp.json()["view_count"] == 0
 
-    db_session.refresh(listing)
-    assert listing.view_count == 0
+    db_session.refresh(post)
+    assert post.view_count == 0

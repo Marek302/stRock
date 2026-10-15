@@ -8,7 +8,7 @@ import pytest
 from app.core.enums import DamageStateId, ShippingOfferId, SoldStateId
 from app.models.damage_state_entity import DamageStateEntity
 from app.models.image_entity import ImageEntity
-from app.models.listing_entity import ListingEntity
+from app.models.post_entity import PostEntity
 from app.models.shipping_offer_entity import ShippingOfferEntity
 from app.models.sold_state_entity import SoldStateEntity
 from app.schemas.firebase_user_token import FirebaseUserToken
@@ -21,7 +21,7 @@ TEST_IMAGES_DIR = Path(__file__).parent / "test_images"
 @pytest.fixture
 def reference_entities(db_session):
     """Crée l'intégralité des états possibles en base de données."""
-    
+
     # 1. Damage States
     damage_entities = {
         "comme_neuf": DamageStateEntity(id=UUID(DamageStateId.COMME_NEUF.value), name="Comme neuf"),
@@ -56,7 +56,7 @@ def reference_entities(db_session):
         *sold_entities.values(),
         *shipping_entities.values()
     ]
-    
+
     db_session.add_all(all_entities)
     db_session.commit()
 
@@ -76,9 +76,9 @@ def get_mock_firebase_user(uid: str = "v"*28, role: str = "basic_user"):
         picture="http://example.com/pic.png",
         role=role,
         permissions=[
-            "listing:create:self",
-            "listing:update:self",
-            "listing:read:self",
+            "post:create:self",
+            "post:update:self",
+            "post:read:self",
             "admin:update:all" # Si vous testez la route réputation
         ],
         email_verified=True,
@@ -92,22 +92,22 @@ def get_mock_firebase_user(uid: str = "v"*28, role: str = "basic_user"):
 
 MOCK_JWT = jwt.encode(payload=asdict(get_mock_firebase_user()), key=SECRET_KEY, algorithm=ALGORITHM)
 
-def insert_listing(db_session, image_count, vendor_id, entities, **overrides) -> List[ImageEntity]:
-    """Insère un listing en base en utilisant les valeurs par défaut clés."""
-    listing_id = uuid4()
+def insert_post(db_session, image_count, user_id, entities, **overrides) -> List[ImageEntity]:
+    """Insère un post en base en utilisant les valeurs par défaut clés."""
+    post_id = uuid4()
     images = []
 
     for i in range(image_count):
         image_id = uuid4()
         images.append(ImageEntity(
                 id= image_id,
-                image_path=f"/{vendor_id}/{listing_id}/{image_id}",
+                image_path=f"/{user_id}/{post_id}/{image_id}",
                 image_index= i,
-                listing_id= listing_id 
+                post_id= post_id
             ))
     data = {
-        "id": listing_id,
-        "vendor_id": vendor_id,
+        "id": post_id,
+        "user_id": user_id,
         "book_id": "BOOK12345678",
         "title": "Titre",
         "description": "Description suffisamment longue.",
@@ -120,10 +120,10 @@ def insert_listing(db_session, image_count, vendor_id, entities, **overrides) ->
         "buyer": overrides.get("buyer"),
         "images": images
     }
-    listing = ListingEntity(**data)
-    db_session.add(listing)
+    post = PostEntity(**data)
+    db_session.add(post)
     db_session.commit()
-    db_session.refresh(listing)
+    db_session.refresh(post)
     return images
 
 
@@ -138,10 +138,10 @@ def test_insert_and_get_valid_images(client, db_session, reference_entities):
     file_path_webp = TEST_IMAGES_DIR / "test-webp.webp"
 
     image_count=2
-    images = insert_listing(
+    images = insert_post(
         image_count=image_count,
         db_session=db_session,
-        vendor_id=user.uid,
+        user_id=user.uid,
         entities=states,
         location="Québec",
         seller_rep=4
@@ -171,7 +171,7 @@ def test_insert_and_get_valid_images(client, db_session, reference_entities):
             assert response.status_code == 200
             assert response.headers["content-type"].startswith("image/")
             assert response.headers["X-Image-Index"] == str(image.image_index)
-            assert response.headers["X-Listing-ID"] == str(image.listing_id)
+            assert response.headers["X-Post-ID"] == str(image.post_id)
             assert response.content
         assert len(response.content) > 0
 
@@ -186,10 +186,10 @@ def test_insert_invalid_images(client, db_session, reference_entities):
     file_path_transparency = TEST_IMAGES_DIR / "test-png.png"
 
     image_count=2
-    images = insert_listing(
+    images = insert_post(
         image_count=image_count,
         db_session=db_session,
-        vendor_id=user.uid,
+        user_id=user.uid,
         entities=states,
         location="Québec",
         seller_rep=4

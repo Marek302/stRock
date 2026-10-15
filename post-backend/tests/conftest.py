@@ -17,7 +17,7 @@ def test_app():
     with pytest.MonkeyPatch().context() as mp:
         mp.setenv("ENVIRONMENT", "TEST")
         return create_application()
-        
+
 @pytest.fixture(scope="session")
 def db_engine():
     """Démarre Postgres une seule fois pour toute la session de test."""
@@ -65,11 +65,11 @@ def client(test_app, db_session: Session):
                 }
             )
             return FirebaseUserToken(**payload)
-            
+
     class MockMessagingService:
-        async def get_message_by_listing_and_participant(self, buyer_id, encoded_token, listing_id):
+        async def get_message_by_post_and_participant(self, buyer_id, encoded_token, post_id):
             return None
-        async def delete_by_listing_id(self, listing_id, encoded_token):
+        async def delete_by_post_id(self, post_id, encoded_token):
             pass
 
     test_app.dependency_overrides[get_session] = get_session_override
@@ -78,5 +78,5 @@ def client(test_app, db_session: Session):
     test_app.dependency_overrides[oauth2_scheme] = mock_oauth_dependency
     with TestClient(test_app) as test_client:
         yield test_client
-    
+
     test_app.dependency_overrides.clear()

@@ -9,7 +9,7 @@ from typing import Generator
 from sqlmodel import SQLModel, create_engine, Session
 
 # Import models so SQLModel registers them for create_all
-from app.models import listing_entity, listing_view_entity  # noqa: F401
+from app.models import post_entity, post_view_entity  # noqa: F401
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")

@@ -13,4 +13,4 @@ class Image(BaseModel):
     """
     id: uuid.UUID | None = Field()
     image_index: int = Field(ge=MIN_IMAGE_INDEX, le=MAX_IMAGE_INDEX)
-    listing_id: uuid.UUID | None = Field()
+    post_id: uuid.UUID | None = Field()

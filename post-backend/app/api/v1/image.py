@@ -1,6 +1,6 @@
 """
 
-Routes pour les images
+Routes pour les publications
 
 """
 import uuid
@@ -17,19 +17,19 @@ from app.services.nsfw_detector import NSFW_DETECTION_ENABLED, NSFW_THRESHOLD
 router = APIRouter(redirect_slashes=False)
 
 @router.put("/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def upload_listing_image(
+async def upload_post_image(
     image_id: uuid.UUID,
     image: UploadFile = File(...),
     image_service: ImageService = Depends(ImageService.get_image_service),
     file_service: FileService = Depends(FileService.get_file_service),
-    token: FirebaseUserToken = Depends(with_claims(["listing:update:self"]))
+    token: FirebaseUserToken = Depends(with_claims(["post:update:self"]))
 ) -> Response:
-    """Upload une photo pour un listing. En-têtes de debug : X-NSFW-Probability, X-NSFW-Threshold, X-NSFW-Detection-Enabled."""
+    """Upload une photo pour une publication. En-têtes de debug : X-NSFW-Probability, X-NSFW-Threshold, X-NSFW-Detection-Enabled."""
     image_entity: ImageEntity = await image_service.get_by_id(image_id=image_id)
-    if image_entity.listing.vendor_id != token.uid:
+    if image_entity.post.user_id != token.uid:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not own the listing attached to this image."
+            detail="Your accout is not associated to the post attached to this image."
             )
     content = await image.read()
     _path, nsfw_prob = await file_service.save_file(photo=content, image_id=image_id)
@@ -46,7 +46,7 @@ async def get_image_by_id(
     image_id: uuid.UUID,
     file_service: FileService = Depends(FileService.get_file_service)
     ) -> FileResponse:
-    """Récupère une photo de listing par son nom de fichier"""
+    """Récupère une photo de post par son nom de fichier"""
     path, image_entity, extension = await file_service.get_file(image_id=image_id)
     media_type = f"image/{extension}"
     return FileResponse(
@@ -54,7 +54,7 @@ async def get_image_by_id(
             media_type=media_type,
             headers={
                 "X-Image-Index": str(image_entity.image_index),
-                "X-Listing-ID": str(image_entity.listing_id)
+                "X-Post-ID": str(image_entity.post_id)
             }
         )
-    
+
