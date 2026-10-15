@@ -37,8 +37,8 @@ class ImageService:
 
     async def delete_entity(self, entity: ImageEntity) -> None:
         """Supprime une image par son id"""
-        await self.session.delete(entity)
-        await self.session.commit()
+        self.session.delete(entity)
+        self.session.commit()
 
 
 

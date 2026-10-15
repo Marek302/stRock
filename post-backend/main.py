@@ -73,7 +73,7 @@ def create_application() -> FastAPI:
     """Initialisation de l'API"""
     application = FastAPI(
         title="Post API",
-        description="Returns book posts for 10Books",
+        description="Publications, événements et alertes du quartier Saint-Roch",
         version="1.0.0",
         lifespan=lifespan
     )

@@ -1,26 +1,35 @@
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import Post from '../components/Post.vue'
+import { getPosts } from '../api/posts'
+import { API_BASE_URL } from '../api/client'
+import type { CommunityPost } from '../types/post'
 
-const posts = [
-  {
-    id: 'demo-1',
-    title: 'Une balade dans Saint-Roch',
-    description: 'Envie de découvrir le quartier à pied ? Je propose une balade pour explorer les petites rues et partager nos endroits préférés. Tout le monde est bienvenu !',
-    userId: 'user-1',
-  },
-  {
-    id: 'demo-2',
-    title: 'Un café entre voisins',
-    description: 'Je viens de m’installer dans Saint-Roch et j’aimerais rencontrer du monde autour d’un café. Si ça te tente, contacte-moi pour qu’on organise ça.',
-    userId: 'user-2',
-  },
-  {
-    id: 'demo-3',
-    title: 'Des livres à partager',
-    description: 'J’ai quelques romans à échanger. Une belle occasion de découvrir de nouvelles lectures et de discuter avec les gens du quartier.',
-    userId: 'user-3',
-  },
-]
+const posts = ref<CommunityPost[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+const hasMore = ref(true)
+const controller = new AbortController()
+
+async function loadMore() {
+  if (loading.value) return
+  loading.value = true
+  error.value = null
+  try {
+    const result = await getPosts(posts.value.length, 20, controller.signal)
+    posts.value.push(...result.posts)
+    hasMore.value = result.posts.length === result.limit
+  } catch (cause) {
+    if (!controller.signal.aborted) {
+      error.value = cause instanceof Error ? cause.message : 'Impossible de charger les publications.'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(loadMore)
+onBeforeUnmount(() => controller.abort())
 </script>
 
 <template>
@@ -31,23 +40,43 @@ const posts = [
         :key="post.id"
         :title="post.title"
         :description="post.description"
-        :user-id="post.userId"
+        :user-id="post.user_id"
+        :location="post.location ?? undefined"
+        :starts-at="post.starts_at ?? undefined"
+        :ends-at="post.ends_at ?? undefined"
+        :image-url="post.images[0] ? `${API_BASE_URL}/images/${post.images[0].id}` : undefined"
       />
+      <div class="mx-auto max-w-[640px] px-6 py-8 text-center" aria-live="polite">
+        <p v-if="loading" role="status">Chargement des publications…</p>
+        <template v-else-if="error">
+          <p role="alert">{{ error }}</p>
+          <button type="button" class="mt-3 min-h-11 cursor-pointer underline" @click="loadMore">Réessayer</button>
+        </template>
+        <p v-else-if="posts.length === 0">Aucune publication pour le moment.</p>
+        <button v-else-if="hasMore" type="button" class="min-h-11 cursor-pointer underline" @click="loadMore">Voir plus de publications</button>
+      </div>
     </div>
   </main>
 </template>
 
 <style scoped>
 .posts-page {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: calc(72px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px));
 }
 
 .post-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 16px 24px;
   height: 100%;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scroll-snap-type: y proximity;
+}
+
+.post-feed > * {
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {

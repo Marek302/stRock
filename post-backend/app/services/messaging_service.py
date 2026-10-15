@@ -1,12 +1,13 @@
 """
 Fichier de la classe MessagingService
 """
+import os
 from uuid import UUID
 import httpx
 
 from app.schemas.conversation import Conversation
 
-MESSAGING_API_BASE_URL="http://messaging-api:8000"
+MESSAGING_API_BASE_URL = os.getenv("MESSAGING_API_BASE_URL", "http://messaging-backend:8000")
 
 class MessagingService:
     """Classe du service de massging"""
@@ -53,7 +54,7 @@ class MessagingService:
         """Suppression des conversations avec le id d'un post"""
         url = (
             f"{self.messaging_api_base_url}"
-            f"/messaging/post/{post_id}"
+            f"/messaging/listing/{post_id}"
         )
         async with httpx.AsyncClient() as client:
             response = await client.delete(url=url,headers={
