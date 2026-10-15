@@ -4,6 +4,7 @@ import Button from 'primevue/button'
 const props = defineProps<{
   title: string
   description: string
+  imageUrl?: string
   userId: string | number
 }>()
 
@@ -15,9 +16,17 @@ const emit = defineEmits<{
 <template>
   <article class="post" :aria-label="title">
     <h2 class="text-center text-2xl font-semibold text-slate-900">{{ title }}</h2>
+    <img
+      v-if="imageUrl"
+      :src="imageUrl"
+      :alt="title"
+      class="mt-6 max-h-[50dvh] w-full shrink-0 rounded-lg object-contain"
+      loading="lazy"
+      decoding="async"
+    />
     <p class="mt-6 whitespace-pre-line text-base leading-relaxed text-slate-600">{{ description }}</p>
     <footer class="mt-auto pt-8">
-      <Button class="min-h-11 w-full" label="Contact poster" @click="emit('contact', props.userId)" />
+      <Button class="min-h-11 w-full" label="Contacter l’auteur" @click="emit('contact', props.userId)" />
     </footer>
   </article>
 </template>
@@ -29,7 +38,7 @@ const emit = defineEmits<{
   width: 100%;
   min-height: 100%;
   margin-inline: auto;
-  padding: 24px max(24px, env(safe-area-inset-right, 0px))
+  padding: 88px max(24px, env(safe-area-inset-right, 0px))
     24px max(24px, env(safe-area-inset-left, 0px));
   overflow-wrap: anywhere;
   border-bottom: 1px solid #e2e8f0;

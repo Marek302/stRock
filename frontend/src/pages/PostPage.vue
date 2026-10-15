@@ -39,7 +39,7 @@ const posts = [
 
 <style scoped>
 .posts-page {
-  padding-top: calc(88px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px));
 }
 

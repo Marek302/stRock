@@ -1,9 +1,19 @@
 <script setup lang="ts">
+import { useId } from 'vue'
 import User from '@primeicons/vue/user'
+
+const thinIconId = useId()
 </script>
 
 <template>
-  <button type="button" class="profil-button liquid-glass" aria-label="Profil">
+  <button type="button" class="profil-button liquid-glass" :style="{ '--profile-icon-filter': `url(#${thinIconId})` }" aria-label="Profil">
+    <svg style="position: absolute; width: 0; height: 0" aria-hidden="true" focusable="false">
+      <defs>
+        <filter :id="thinIconId">
+          <feMorphology operator="erode" radius="0.2" />
+        </filter>
+      </defs>
+    </svg>
     <User size="70%" aria-hidden="true" />
   </button>
 </template>
@@ -26,9 +36,14 @@ import User from '@primeicons/vue/user'
   transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.profil-button :deep(svg) {
+.profil-button :deep(svg.p-icon) {
   width: 70%;
   height: 70%;
+}
+
+/* PrimeIcons uses filled outlines; erode their edges to thin the same icon. */
+.profil-button :deep(.p-icon path) {
+  filter: var(--profile-icon-filter);
 }
 
 .profil-button:focus-visible {

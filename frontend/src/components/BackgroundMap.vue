@@ -36,10 +36,16 @@ onMounted(() => {
     keepBuffer: 0,
     minZoom: 16,
     maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · Limites : <a href="https://www.donneesquebec.ca/recherche/dataset/5b1ae6f2-6719-46df-bd2f-e57a7034c917">Ville de Québec</a>',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> — contributeurs · Limites : <a href="https://www.donneesquebec.ca/recherche/dataset/5b1ae6f2-6719-46df-bd2f-e57a7034c917">Ville de Québec</a>',
   }).addTo(instance)
 
-  const zoom = control.zoom({ position: 'bottomright' }).addTo(instance)
+  const zoom = control.zoom({
+    position: 'bottomright',
+    zoomInTitle: 'Zoomer',
+    zoomOutTitle: 'Dézoomer',
+  }).addTo(instance)
+  instance.attributionControl.getContainer()?.querySelector('a[href*="leafletjs.com"]')
+    ?.setAttribute('title', 'Bibliothèque JavaScript de cartes interactives')
   zoom.getContainer()?.querySelector('.leaflet-control-zoom-in')?.setAttribute('aria-label', 'Zoomer')
   zoom.getContainer()?.querySelector('.leaflet-control-zoom-out')?.setAttribute('aria-label', 'Dézoomer')
 

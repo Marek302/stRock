@@ -6,10 +6,9 @@ import ProfilButton from './components/ProfilButton.vue'
 
 const route = useRoute()
 const transitionName = ref('page-slide-left')
-const pageOrder = (name: unknown) => name === 'posts' ? 1 : 0
 
-watch(() => route.name, (to, from) => {
-  transitionName.value = pageOrder(to) > pageOrder(from) ? 'page-slide-left' : 'page-slide-right'
+watch(() => route.meta.order, (to, from) => {
+  transitionName.value = Number(to ?? 0) > Number(from ?? 0) ? 'page-slide-left' : 'page-slide-right'
 }, { flush: 'sync' })
 </script>
 

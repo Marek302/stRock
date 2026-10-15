@@ -8,16 +8,17 @@ const route = useRoute()
 const router = useRouter()
 const navbar = useTemplateRef<HTMLElement>('navbar')
 const { activeIndex, bubbleStyle, attractBubble, resetBubble, selectBubble } =
-  useBubble(navbar, sections.length, route.name === 'posts' ? 1 : 0)
+  useBubble(navbar, sections.length, Number(route.meta.order ?? 0))
 
-watch(() => route.name, (name) => {
-  selectBubble(name === 'posts' ? 1 : 0)
+watch(() => route.meta.order, (order) => {
+  selectBubble(Number(order ?? 0))
 })
 
 function selectSection(index: number) {
   selectBubble(index)
   if (index === 0) void router.push({ name: 'map' })
   if (index === 1) void router.push({ name: 'posts' })
+  if (index === 2) void router.push({ name: 'messages' })
 }
 </script>
 
