@@ -1,0 +1,9 @@
+pylint
+pre-commit
+pytest
+pytest-asyncio
+pytest-env  
+httpx
+testcontainers
+psycopg2
+coverage

@@ -1,0 +1,25 @@
+[MASTER]
+# Use multiple processes to speed up Pylint.
+jobs=1
+
+# Discover python modules and packages in the file system subtree.
+recursive=yes
+
+[MESSAGES CONTROL]
+# Disable import-error for local app imports that pylint can't resolve in CI
+disable=import-error
+
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=100
+
+[BASIC]
+# Good variable names which should always be accepted, separated by a comma.
+good-names=i,j,k,ex,Run,_,id,me
+
+[DESIGN]
+# Maximum number of arguments for function / method.
+max-args=10
+
+# Maximum number of attributes for a class.
+max-attributes=15

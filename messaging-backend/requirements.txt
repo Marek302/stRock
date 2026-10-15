@@ -1,0 +1,13 @@
+fastapi[standard]
+uvicorn
+pydantic
+motor
+pymongo
+python-dotenv
+PyJWT
+cryptography
+httpx
+pillow
+aiofiles
+-e ./external/fastapi-limiter
+firebase-admin

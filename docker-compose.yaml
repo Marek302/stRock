@@ -1,0 +1,128 @@
+services:
+  nginx:
+    image: nginx:latest
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+    container_name: 10books-proxy
+    ports:
+      - "8080:80"
+    networks:
+      - 10books-website
+      - 10books-releases
+      - 10books-network
+    restart: unless-stopped
+    depends_on:
+      - books-api
+      - listing-api
+      - messaging-api
+
+  website:
+    image: nginx:alpine
+    container_name: 10books-website
+    env_file:
+      - 10books-website/.env
+    build:
+      context: 10books-website
+      dockerfile: Dockerfile
+    networks:
+      - 10books-website
+    restart: unless-stopped
+
+  releases-api:
+    image: releases-api:latest
+    build:
+      context: ./10books-releases
+      dockerfile: Dockerfile
+    container_name: 10books-releases
+    shm_size: '512mb'
+    env_file:
+      - 10books-releases/.env
+    networks:
+      - 10books-releases
+    volumes:
+      - ./10books-releases/keystore.jks:/app/keystore.jks:ro
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  books-api:
+    image: books-api:latest
+    build:
+      context: ./10books-books-api
+      dockerfile: Dockerfile
+    container_name: 10books-books-api
+    env_file:
+      - 10books-books-api/.env
+    networks:
+      - 10books-network
+    restart: unless-stopped
+
+  listing-api:
+    image: listing-api:latest
+    build:
+      context: ./10books-listing-api
+      dockerfile: Dockerfile.test
+    container_name: 10books-listing-api
+    env_file:
+      - 10books-listing-api/.env
+    networks:
+      - 10books-network
+      - 10books-listing
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  messaging-api:
+    image: messaging-api:latest
+    build:
+      context: 10books-messaging-api/
+      dockerfile: Dockerfile
+    container_name: 10books-messaging-api
+    env_file:
+      - 10books-messaging-api/.env
+    networks:
+      - 10books-network
+      - 10books-messaging
+    restart: unless-stopped
+    depends_on:
+      - messaging-api-db
+
+  postgres-db:
+    image: postgres-db:latest
+    build:
+      context: postgres-db
+      dockerfile: Dockerfile
+    container_name: postgres-db
+    env_file:
+      - postgres-db/.env
+    networks:
+      - 10books-releases
+      - 10books-listing
+    restart: always
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$DB_USER -d $$DB_NAME"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  messaging-api-db:
+    image: messaging-db:latest
+    build:
+      context: messaging-db
+      dockerfile: Dockerfile
+    env_file:
+      - messaging-db/.env
+    networks:
+      - 10books-messaging
+
+networks:
+  10books-website:
+  10books-network:
+  10books-listing:
+  10books-messaging:
+  10books-releases:
