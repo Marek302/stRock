@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useId } from 'vue'
+import { useRouter } from 'vue-router'
 import User from '@primeicons/vue/user'
 
 const thinIconId = useId()
+const router = useRouter()
 </script>
 
 <template>
-  <button type="button" class="profil-button liquid-glass" :style="{ '--profile-icon-filter': `url(#${thinIconId})` }" aria-label="Profil">
+  <button type="button" class="profil-button liquid-glass" :style="{ '--profile-icon-filter': `url(#${thinIconId})` }" aria-label="Profil" @click="router.push({ name: 'profile' })">
     <svg style="position: absolute; width: 0; height: 0" aria-hidden="true" focusable="false">
       <defs>
         <filter :id="thinIconId">

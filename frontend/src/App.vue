@@ -16,7 +16,7 @@ watch(() => route.meta.order, (to, from) => {
   <div class="page-viewport">
     <RouterView v-slot="{ Component }">
       <Transition :name="transitionName">
-        <KeepAlive>
+        <KeepAlive exclude="LoginPage,ProfilePage">
           <component :is="Component" />
         </KeepAlive>
       </Transition>

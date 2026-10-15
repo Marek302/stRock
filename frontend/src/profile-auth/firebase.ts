@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, type User } from 'firebase/auth';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import firebaseConfig from './config.json';
 
@@ -31,6 +31,10 @@ export const FirebaseService = {
   },
   async signInWithGoogle(): Promise<User> {
     const result = await signInWithPopup(auth, googleProvider);
+    return result.user;
+  },
+  async signInWithEmail(email: string, password: string): Promise<User> {
+    const result = await signInWithEmailAndPassword(auth, email, password);
     return result.user;
   },
   async signOut(): Promise<void> {

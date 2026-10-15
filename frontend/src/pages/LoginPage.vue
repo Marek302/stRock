@@ -1,54 +1,38 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { FirebaseService, type AuthUser } from './firebase';
+import { useRouter } from 'vue-router';
+import { FirebaseService } from '../profile-auth/firebase';
 
-const emit = defineEmits<{
-  (e: 'login', user: AuthUser): void;
-}>();
-
-const email = ref('alex.chen@roch-on.com');
-const password = ref('password123');
+const router = useRouter();
+const email = ref('');
+const password = ref('');
 const isLoading = ref(false);
 const errorMsg = ref('');
 
-const handleGoogleSignIn = async () => {
+async function signIn(method: 'google' | 'email') {
+  if (isLoading.value) return;
   isLoading.value = true;
   errorMsg.value = '';
   try {
-    const user = await FirebaseService.signInWithGoogle();
-    emit('login', {
-      uid: user.uid,
-      email: user.email || '',
-      displayName: user.displayName || user.email?.split('@')[0] || 'User',
-      photoURL: user.photoURL || undefined,
-    });
-  } catch (err: any) {
-    console.error('Google Sign-In Error:', err);
-    errorMsg.value =
-      err?.message?.includes('popup') || err?.message?.includes('closed')
-        ? 'Sign-in popup was closed or blocked. You can retry.'
-        : 'Sign in failed. Please try again.';
+    if (method === 'google') {
+      await FirebaseService.signInWithGoogle();
+    } else {
+      await FirebaseService.signInWithEmail(email.value, password.value);
+    }
+    await router.replace({ name: 'profile' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    errorMsg.value = message.includes('popup') || message.includes('closed')
+      ? 'Sign-in popup was closed or blocked. You can retry.'
+      : 'Sign in failed. Please try again.';
   } finally {
     isLoading.value = false;
   }
-};
-
-const handleEmailSubmit = () => {
-  const name = email.value
-    .split('@')[0]
-    .replace('.', ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-
-  emit('login', {
-    uid: 'user-' + Date.now(),
-    email: email.value,
-    displayName: name || 'User',
-  });
-};
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+  <main class="page auth-page bg-slate-50 flex items-center justify-center" aria-label="Connexion">
     <div class="bg-white max-w-sm w-full rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
       <!-- roch-on Brand Header -->
       <div class="text-center mb-6">
@@ -67,7 +51,7 @@ const handleEmailSubmit = () => {
       </div>
 
       <!-- Error notice -->
-      <div v-if="errorMsg" class="mb-4 p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
+      <div v-if="errorMsg" role="alert" class="mb-4 p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
         {{ errorMsg }}
       </div>
 
@@ -75,7 +59,7 @@ const handleEmailSubmit = () => {
       <button
         type="button"
         :disabled="isLoading"
-        @click="handleGoogleSignIn"
+        @click="signIn('google')"
         class="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-2xs disabled:opacity-50"
       >
         <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
@@ -109,7 +93,7 @@ const handleEmailSubmit = () => {
       </div>
 
       <!-- Email / Password Form -->
-      <form @submit.prevent="handleEmailSubmit" class="space-y-3.5">
+      <form @submit.prevent="signIn('email')" class="space-y-3.5">
         <div>
           <label class="block text-xs font-semibold text-slate-700 mb-1">
             Email
@@ -138,11 +122,25 @@ const handleEmailSubmit = () => {
 
         <button
           type="submit"
+          :disabled="isLoading"
           class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-xs sm:text-sm transition-colors mt-2"
         >
           Sign In
         </button>
       </form>
     </div>
-  </div>
+  </main>
 </template>
+
+<style scoped>
+.auth-page {
+  overflow-y: auto;
+  padding: 112px 16px calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px) + 24px);
+}
+
+@media (min-width: 768px) {
+  .auth-page {
+    padding-bottom: 24px;
+  }
+}
+</style>
