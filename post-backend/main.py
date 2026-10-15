@@ -9,7 +9,7 @@ from pathlib import Path
 import jwt
 from fastapi import FastAPI, Request, WebSocket
 from contextlib import asynccontextmanager
-from app.api.v1 import listing
+from app.api.v1 import post
 from app.api.v1 import image
 from pyrate_limiter import Duration, Limiter, Rate
 from fastapi_limiter.middleware import RateLimiterMiddleware
@@ -24,13 +24,13 @@ from app.exception_handlers import add_exception_handlers
 async def default_identifier(request: Union[Request, WebSocket]):
     """Implemente le rate limit par user id"""
     auth_header = request.headers.get("Authorization")
-    
+
     if not auth_header or not auth_header.startswith("Bearer "):
-        return request.client.host 
+        return request.client.host
 
     try:
         token = auth_header.split(" ")[1]
-        decoded_token = jwt.decode(token, options={"verify_signature": False}) 
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
         return decoded_token.get("uid") or request.client.host
     except Exception:
         forwarded = request.headers.get("X-Forwarded-For")
@@ -66,21 +66,21 @@ def receive_before_delete(mapper, connection, target: ImageEntity):
 def _setup_image_listeners():
     if not event.contains(ImageEntity, "before_delete", receive_before_delete):
         event.listen(ImageEntity, "before_delete", receive_before_delete)
-    
 
-            
+
+
 def create_application() -> FastAPI:
     """Initialisation de l'API"""
     application = FastAPI(
-        title="Listing API",
-        description="Returns book listings for 10Books",
+        title="Post API",
+        description="Returns book posts for 10Books",
         version="1.0.0",
         lifespan=lifespan
     )
     application.include_router(
-        listing.router,
-        prefix="/api/v1/listings",
-        tags=["Listings"]
+        post.router,
+        prefix="/api/v1/posts",
+        tags=["Posts"]
     )
     application.include_router(
         image.router,

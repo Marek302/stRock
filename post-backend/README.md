@@ -1,4 +1,4 @@
-# 10Books Listing API
+# 10Books Post API
 
 Cette API est un service de gestion d'annonces de livres pour la plateforme 10Books. Elle permet aux utilisateurs de créer, consulter, supprimer des annonces et de gérer les images associées.
 
@@ -6,20 +6,20 @@ Ce projet est un sous-module de [10books-docker-infrastructure](https://gitlab.c
 
 ## Description Générale
 
-L'API Listing gère le cycle de vie des annonces de livres, incluant les informations sur l'état du livre, le prix, l'emplacement, et les images. Elle s'intègre avec Firebase pour l'authentification et utilise une base de données PostgreSQL pour le stockage des données.
+L'API Post gère le cycle de vie des annonces de livres, incluant les informations sur l'état du livre, le prix, l'emplacement, et les images. Elle s'intègre avec Firebase pour l'authentification et utilise une base de données PostgreSQL pour le stockage des données.
 
 ## Routes de l'API
 
-### Annonces (Listings)
+### Annonces (Posts)
 
-- `GET /api/v1/listings` : Récupère toutes les annonces avec support pour la pagination et les filtres.
-- `POST /api/v1/listings` : Crée une nouvelle annonce (authentification requise).
-- `GET /api/v1/listings/{listing_id}` : Récupère les détails d'une annonce spécifique par son ID.
-- `DELETE /api/v1/listings/{listing_id}` : Supprime une annonce (propriétaire uniquement).
-- `GET /api/v1/listings/{listing_id}/sold-status` : Récupère le statut de vente d'une annonce.
-- `PATCH /api/v1/listings/{listing_id}/sold` : Marque une annonce comme vendue.
-- `GET /api/v1/listings/user/{vendor_id}` : Récupère toutes les annonces d'un utilisateur spécifique.
-- `PATCH /api/v1/listings/vendor/{vendor_id}/reputation` : Met à jour la réputation d'un vendeur (réservé aux administrateurs).
+- `GET /api/v1/posts` : Récupère toutes les annonces avec support pour la pagination et les filtres.
+- `POST /api/v1/posts` : Crée une nouvelle annonce (authentification requise).
+- `GET /api/v1/posts/{post_id}` : Récupère les détails d'une annonce spécifique par son ID.
+- `DELETE /api/v1/posts/{post_id}` : Supprime une annonce (propriétaire uniquement).
+- `GET /api/v1/posts/{post_id}/sold-status` : Récupère le statut de vente d'une annonce.
+- `PATCH /api/v1/posts/{post_id}/sold` : Marque une annonce comme vendue.
+- `GET /api/v1/posts/user/{user_id}` : Récupère toutes les annonces d'un utilisateur spécifique.
+- `PATCH /api/v1/posts/user/{user_id}/reputation` : Met à jour la réputation d'un vendeur (réservé aux administrateurs).
 
 ### Images
 
@@ -62,11 +62,20 @@ Au premier appel, le modèle est téléchargé depuis le Hugging Face Hub ; un a
 
 1. Construisez l'image :
    ```bash
-   docker build -t 10books-listing-api .
+   docker build -t 10books-post-api .
    ```
 2. Lancez le conteneur :
    ```bash
-   docker run -p 8000:8000 --env-file .env 10books-listing-api
+   docker run -p 8000:8000 --env-file .env 10books-post-api
    ```
 
 Le service sera alors accessible sur `http://localhost:8000`. La documentation Swagger interactive est disponible sur `http://localhost:8000/docs`.
+
+Les réponses GET des posts (détail et listes) incluent `latitude` et `longitude`. Ces champs sont optionnels à la création et valent `null` si absents. La latitude doit être comprise entre -90 et 90 et la longitude entre -180 et 180.
+
+Pour une base existante, ajouter les colonnes avant de démarrer cette version :
+
+```sql
+ALTER TABLE post ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE post ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+```

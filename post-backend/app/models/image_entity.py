@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from sqlmodel import SQLModel, Field, Relationship
 
 if TYPE_CHECKING:
-    from app.models.listing_entity import ListingEntity
+    from app.models.post_entity import PostEntity
 
 class ImageEntity(SQLModel, table=True):
     """Représente la table 'image' dans la base de données."""
@@ -15,5 +15,5 @@ class ImageEntity(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True, nullable=False)
     image_path: str = Field(nullable=False)
     image_index: int = Field(nullable=False)
-    listing_id: UUID = Field(foreign_key="listing.id", nullable=False)
-    listing: "ListingEntity" = Relationship(back_populates="images")
+    post_id: UUID = Field(foreign_key="post.id", nullable=False)
+    post: "PostEntity" = Relationship(back_populates="images")

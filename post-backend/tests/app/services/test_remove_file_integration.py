@@ -63,7 +63,7 @@ async def test_remove_file_from_path_deletes_file():
     """
     Cas nominal : remove_file_from_path doit supprimer le fichier du disque.
     """
-    relative_path = "vendor_a/listing_b/image_c.jpg"
+    relative_path = "user_a/post_b/image_c.jpg"
 
     # Copie l'image AVANT de tenter la suppression
     copied_file = _copy_source_image("test-jpg.jpg", relative_path)
@@ -82,8 +82,8 @@ async def test_remove_file_from_path_file_not_found_is_ignored():
     Si le fichier est introuvable sur le disque, remove_file_from_path ignore l'erreur
     silencieusement.
     """
-    relative_path = "vendor_x/listing_y/image_missing.jpg"
-    
+    relative_path = "user_x/post_y/image_missing.jpg"
+
     # On ne copie pas le fichier.
     missing_file = TMP_STORAGE_ROOT / relative_path
     assert not missing_file.exists()
@@ -99,7 +99,7 @@ async def test_remove_file_from_path_disk_error_bubbles_up():
     Si la suppression du fichier échoue à cause de permissions (OSError),
     l'exception doit remonter (seul FileNotFoundError est ignoré).
     """
-    relative_path = "vendor_err/listing_err/image_err.jpg"
+    relative_path = "user_err/post_err/image_err.jpg"
 
     # Copie l'image avant le test
     copied_file = _copy_source_image("test-jpg.jpg", relative_path)
@@ -123,7 +123,7 @@ async def test_remove_file_from_path_webp_also_works():
     """
     Vérifie que remove_file_from_path fonctionne également avec des images WebP.
     """
-    relative_path = "vendor_w/listing_w/image_w.webp"
+    relative_path = "user_w/post_w/image_w.webp"
 
     copied_file = _copy_source_image("test-webp.webp", relative_path)
     assert copied_file.exists()

@@ -22,7 +22,7 @@ async def test_init_storage_success():
          patch('builtins.open', new_callable=MagicMock) as mock_open, \
          patch('os.remove') as mock_remove, \
          patch('os.getenv', return_value=TEST_SAVE_ROOT):
-        
+
         FileService.init_storage()
 
         mock_makedirs.assert_called_once_with(TEST_SAVE_ROOT, exist_ok=True)
@@ -48,7 +48,7 @@ async def test_save_file_too_big():
     image_service_mock = AsyncMock()
     with patch('os.getenv', return_value=TEST_SAVE_ROOT):
         file_service = FileService(image_service_mock)
-    
+
     with pytest.raises(FileTooBigException):
         await file_service.save_file(b'a' * (10 * 1024 * 1024 + 1), uuid.uuid4())
 
@@ -67,15 +67,15 @@ async def test_save_file_success(mock_run_in_threadpool, _mock_nsfw, mock_aiofil
     image_service_mock = AsyncMock()
     image_entity_mock = MagicMock()
     image_entity_mock.image_path = "tests/test_images/test-jpg.jpg"
-    image_entity_mock.listing_id = uuid.uuid4()
+    image_entity_mock.post_id = uuid.uuid4()
     image_service_mock.get_by_id.return_value = image_entity_mock
-    
+
     mock_file_handle = AsyncMock()
     mock_context_manager = MagicMock()
     mock_context_manager.__aenter__ = AsyncMock(return_value=mock_file_handle)
     mock_context_manager.__aexit__ = AsyncMock(return_value=None)
     mock_aiofiles_open.return_value = mock_context_manager
-    
+
     with patch('os.getenv', return_value=TEST_SAVE_ROOT):
         file_service = FileService(image_service_mock)
 
@@ -87,9 +87,9 @@ async def test_save_file_success(mock_run_in_threadpool, _mock_nsfw, mock_aiofil
         f.close()
 
     image_id = uuid.uuid4()
-    
+
     result_path, nsfw_prob = await file_service.save_file(photo_bytes, image_id)
-    
+
     image_service_mock.get_by_id.assert_called_once_with(image_id=image_id)
     expected_path = Path(TEST_SAVE_ROOT) / Path(image_entity_mock.image_path.lstrip("/"))
 
@@ -106,10 +106,10 @@ async def test_save_file_storage_exception():
     image_entity_mock = MagicMock()
     image_entity_mock.image_path = "/test/path/image.jpg"
     image_service_mock.get_by_id.return_value = image_entity_mock
-    
+
     with patch('os.getenv', return_value=TEST_SAVE_ROOT):
         file_service = FileService(image_service_mock)
-    
+
     with patch('app.services.file_service.run_in_threadpool', side_effect=Exception("Disk full")):
         with pytest.raises(StorageException):
             await file_service.save_file(b'test', uuid.uuid4())
@@ -131,7 +131,7 @@ async def test_remove_file_from_path_success(mock_run_in_threadpool):
 
     mock_run_in_threadpool.side_effect = threadpool_side_effect
 
-    relative_path = "vendor123/listing456/image_from_path"
+    relative_path = "user123/post456/image_from_path"
     expected_abs_path = Path(TEST_SAVE_ROOT) / relative_path
 
     with patch('os.getenv', return_value=TEST_SAVE_ROOT), \
@@ -152,7 +152,7 @@ async def test_remove_file_from_path_file_not_found_is_ignored(mock_run_in_threa
 
     mock_run_in_threadpool.side_effect = threadpool_side_effect
 
-    relative_path = "vendor123/listing456/missing_image"
+    relative_path = "user123/post456/missing_image"
     expected_abs_path = Path(TEST_SAVE_ROOT) / relative_path
 
     with patch('os.getenv', return_value=TEST_SAVE_ROOT), \
