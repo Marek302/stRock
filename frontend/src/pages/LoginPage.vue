@@ -4,21 +4,15 @@ import { useRouter } from 'vue-router';
 import { FirebaseService } from '../profile-auth/firebase';
 
 const router = useRouter();
-const email = ref('');
-const password = ref('');
 const isLoading = ref(false);
 const errorMsg = ref('');
 
-async function signIn(method: 'google' | 'email') {
+async function signInWithGoogle() {
   if (isLoading.value) return;
   isLoading.value = true;
   errorMsg.value = '';
   try {
-    if (method === 'google') {
-      await FirebaseService.signInWithGoogle();
-    } else {
-      await FirebaseService.signInWithEmail(email.value, password.value);
-    }
+    await FirebaseService.signInWithGoogle();
     await router.replace({ name: 'profile' });
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
@@ -42,11 +36,11 @@ async function signIn(method: 'google' | 'email') {
         <div class="flex items-center justify-center gap-1.5">
           <h1 class="text-2xl font-black tracking-tight text-slate-900">roch-on</h1>
           <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
-            Firebase
+            Google Auth
           </span>
         </div>
         <p class="text-xs text-slate-500 mt-1">
-          Sign in to customize your personal profile
+          Sign in to access your profile
         </p>
       </div>
 
@@ -55,12 +49,12 @@ async function signIn(method: 'google' | 'email') {
         {{ errorMsg }}
       </div>
 
-      <!-- Google Sign In Button -->
+      <!-- Google Sign In Button Only -->
       <button
         type="button"
         :disabled="isLoading"
-        @click="signIn('google')"
-        class="w-full flex items-center justify-center gap-3 py-2.5 px-4 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-2xs disabled:opacity-50"
+        @click="signInWithGoogle"
+        class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-2xs disabled:opacity-50"
       >
         <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
           <path
@@ -82,52 +76,6 @@ async function signIn(method: 'google' | 'email') {
         </svg>
         <span>{{ isLoading ? 'Connecting to Google...' : 'Continue with Google' }}</span>
       </button>
-
-      <div class="relative my-5">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-slate-200" />
-        </div>
-        <div class="relative flex justify-center text-xs">
-          <span class="bg-white px-2 text-slate-400">or sign in with email</span>
-        </div>
-      </div>
-
-      <!-- Email / Password Form -->
-      <form @submit.prevent="signIn('email')" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">
-            Email
-          </label>
-          <input
-            v-model="email"
-            type="email"
-            required
-            placeholder="you@example.com"
-            class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">
-            Password
-          </label>
-          <input
-            v-model="password"
-            type="password"
-            required
-            placeholder="••••••••"
-            class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-900"
-          />
-        </div>
-
-        <button
-          type="submit"
-          :disabled="isLoading"
-          class="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl text-xs sm:text-sm transition-colors mt-2"
-        >
-          Sign In
-        </button>
-      </form>
     </div>
   </main>
 </template>
