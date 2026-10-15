@@ -17,7 +17,11 @@ USER = os.getenv("DB_USER")
 PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 
-CONNECTION_STR = f"postgresql://{USER}:{PASSWORD}@{DATABASE_URL}/{DB_NAME}"
+CONNECTION_STR = os.getenv("CONNECTION_STR")
+if not CONNECTION_STR:
+    CONNECTION_STR = f"postgresql+psycopg2://{USER}:{PASSWORD}@{DATABASE_URL}/{DB_NAME}"
+elif CONNECTION_STR.startswith("postgresql://"):
+    CONNECTION_STR = CONNECTION_STR.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 engine = create_engine(CONNECTION_STR, echo=True)
 
