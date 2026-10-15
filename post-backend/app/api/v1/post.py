@@ -13,9 +13,7 @@ from app.services.post_service import PostService
 from app.mappers.post_mapper import PostMapper
 from app.schemas.create.post_create import PostCreate
 from app.schemas.summary.post_location import PostLocation
-from app.schemas.update.user_reputation_update import UserReputationUpdate
 from app.core.security import with_claims, optional_with_claims
-import app.core.enums as enums
 from app.services.messaging_service import MessagingService
 
 router = APIRouter(redirect_slashes=False)
@@ -47,7 +45,7 @@ async def get_post_locations(
 async def create_post(
     post: PostCreate,
     service: PostService = Depends(PostService.get_post_service),
-    token: FirebaseUserToken = Depends(with_claims(["post:create:self"]))
+    token: FirebaseUserToken = Depends(with_claims([]))
 ):
     """Crée une nouvelle publication"""
     new_post = service.create(post=post, user_id=token.uid)
@@ -63,7 +61,7 @@ async def delete_post(
     post_id: str,
     service: PostService = Depends(PostService.get_post_service),
     messaging: MessagingService = Depends(MessagingService.get_messaging_service),
-    auth: Tuple[str, FirebaseUserToken] = Depends(with_claims(["post:delete:self"], decode=False))
+    auth: Tuple[str, FirebaseUserToken] = Depends(with_claims([], decode=False))
 ):
     """Supprime une publication"""
     token = auth[1]
@@ -104,12 +102,19 @@ async def get_posts_by_user(
 async def get_post(
     post_id: str,
     service: PostService = Depends(PostService.get_post_service),
-    token: FirebaseUserToken | None = Depends(optional_with_claims(["post:read:self"]))
+    token: FirebaseUserToken | None = Depends(optional_with_claims([]))
 ):
-    """Récupère un post par ID. Incrémente view_count si l'utilisateur authentifié n'est pas le vendeur (une fois par user)."""
-    post_entity = service.get_by_id(post_id)
-    if token is not None and token.uid != post_entity.user_id:
-        service._record_view(post_id=post_id, user_id=token.uid)
-    post_entity = service.get_by_id(post_id)
-    return PostMapper.to_schema(post_entity)
+    """Récupère les détails d'un contenu."""
+    return PostMapper.to_schema(service.get_by_id(post_id))
 
+
+@router.patch("/{post_id}/close")
+async def close_alert(
+    post_id: str,
+    service: PostService = Depends(PostService.get_post_service),
+    token: FirebaseUserToken = Depends(with_claims([])),
+):
+    entity = service.get_by_id(post_id)
+    if entity.user_id != token.uid:
+        raise HTTPException(status_code=403, detail="Seul l'auteur peut clôturer cette alerte")
+    return PostMapper.to_schema(service.close_alert(entity))
