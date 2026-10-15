@@ -50,3 +50,11 @@ select {
   height: 100dvh;
   overflow: hidden;
 }
+
+.liquid-glass {
+  border: 1px solid rgb(255 255 255 / 60%);
+  background: rgb(231 243 255 / 28%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 4px 24px rgb(28 61 95 / 10%);
+}
