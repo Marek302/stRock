@@ -51,7 +51,7 @@ const handleLogout = async () => {
           class="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-rose-600 transition-colors py-1 px-2.5 rounded-lg hover:bg-slate-100"
         >
           <LogOut class="w-3.5 h-3.5" />
-          <span>Log Out</span>
+          <span>Se déconnecter</span>
         </button>
       </div>
 
@@ -76,7 +76,7 @@ const handleLogout = async () => {
           </div>
 
           <h2 class="text-base font-bold text-slate-900 mt-3">
-            {{ profile.displayName || user?.displayName || 'User' }}
+            {{ profile.displayName || user?.displayName || 'Utilisateur' }}
           </h2>
           <p class="text-xs text-slate-500">
             {{ profile.email || user?.email }}
@@ -87,16 +87,16 @@ const handleLogout = async () => {
         <div class="space-y-3 pt-2 border-t border-slate-100">
           <div>
             <span class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-              Display Name
+              Nom affiché
             </span>
             <div class="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium">
-              {{ profile.displayName || user?.displayName || 'Not set' }}
+              {{ profile.displayName || user?.displayName || 'Non renseigné' }}
             </div>
           </div>
 
           <div>
             <span class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">
-              Email Address
+              Adresse courriel
             </span>
             <div class="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium">
               {{ profile.email || user?.email }}
@@ -112,7 +112,7 @@ const handleLogout = async () => {
             class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
           >
             <LogOut class="w-4 h-4 text-slate-500" />
-            <span>Sign Out</span>
+            <span>Se déconnecter</span>
           </button>
         </div>
       </div>
