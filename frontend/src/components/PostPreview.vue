@@ -86,7 +86,9 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
   left: 24px;
   width: min(280px, calc(100vw - 32px));
   max-height: min(320px, calc(100dvh - 200px));
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 20px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
@@ -147,8 +149,11 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
 }
 
 .preview-description {
-  max-height: 144px;
-  overflow-y: auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  min-height: 0;
+  overflow: hidden;
   margin: 0 0 8px;
   white-space: pre-line;
   color: #475569;
