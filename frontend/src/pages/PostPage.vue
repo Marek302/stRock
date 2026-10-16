@@ -42,6 +42,13 @@ async function selectLocation() {
   await router.push({ name: 'map', query: { pickPostLocation: '1' } })
 }
 
+function showPostLocation(post: PostItem) {
+  if (post.latitude == null || post.longitude == null) return
+  void router.push({ name: 'map', query: {
+    post: post.id, latitude: String(post.latitude), longitude: String(post.longitude),
+  } })
+}
+
 async function handleCreated(post: CommunityPost) {
   await closeCreation()
   await router.replace({ name: 'posts', query: { post: post.id } })
@@ -126,15 +133,17 @@ async function contactAuthor(postId: string, userId: string | number) {
         :class="{ 'selected-post': post.id === selectedPost?.id }"
         tabindex="-1"
         :title="post.title"
+        :post-id="post.id"
         :description="post.description"
         :user-id="post.userId"
         :image-url="post.imageUrl"
-        :location="post.location"
+        :has-location="post.hasLocation"
         :starts-at="post.startsAt"
         :ends-at="post.endsAt"
         :contacting="contactingPostId === post.id"
         :contact-disabled="contactingPostId !== null"
         @contact="contactAuthor(post.id, $event)"
+        @view-location="showPostLocation(post)"
       />
       <div v-if="isLoading || error || !hasMore" class="feed-status p-6 text-center text-slate-600">
         <p v-if="isLoading" role="status">Chargement des publications…</p>

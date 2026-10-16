@@ -5,10 +5,11 @@ Point de démarrage
 """
 import os
 import asyncio
+import logging
 from pathlib import Path
 import jwt
 from fastapi import FastAPI, Request, WebSocket
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from app.api.v1 import post
 from app.api.v1 import image
 from pyrate_limiter import Duration, Limiter, Rate
@@ -17,7 +18,9 @@ from sqlalchemy import event
 from app.models.image_entity import ImageEntity
 from typing import Union
 from firebase_admin import initialize_app
-from app.core.db import init_db, shutdown
+from app.core.db import engine, init_db, shutdown
+from sqlmodel import Session
+from app.services.post_service import PostService
 from app.services.file_service import FileService
 from app.exception_handlers import add_exception_handlers
 
@@ -47,8 +50,26 @@ async def lifespan(app: FastAPI):
     """Définie le comportement de l'application"""
     init_db()
     FileService.init_storage()
-    yield
-    shutdown()
+    cleanup_task = asyncio.create_task(cleanup_expired_publications())
+    try:
+        yield
+    finally:
+        cleanup_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await cleanup_task
+        shutdown()
+
+def delete_expired_publications():
+    with Session(engine) as session:
+        PostService(session).delete_expired_publications()
+
+async def cleanup_expired_publications():
+    while True:
+        try:
+            await asyncio.to_thread(delete_expired_publications)
+        except Exception:
+            logging.exception("Impossible de supprimer les publications expirées")
+        await asyncio.sleep(60)
 
 def receive_before_delete(mapper, connection, target: ImageEntity):
         async def _async_delete():

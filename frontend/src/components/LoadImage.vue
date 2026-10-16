@@ -38,7 +38,9 @@ function onInput(event: Event) {
   <div class="load-image">
     <div class="drop-zone" @dragover.prevent @drop.prevent="!disabled && onDrop($event)">
       <p>Déposez une image ici</p>
-      <button type="button" :disabled="disabled" @click="input?.click()">Importer une image</button>
+      <button type="button" :disabled="disabled" @click="input?.click()">
+        {{ fileName ? 'Changer l’image' : 'Importer une image' }}
+      </button>
       <input ref="input" type="file" accept="image/jpeg,image/png,image/webp" hidden :disabled="disabled" @change="onInput" />
       <p v-if="fileName">{{ fileName }}</p>
     </div>

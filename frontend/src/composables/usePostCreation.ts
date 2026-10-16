@@ -10,6 +10,7 @@ export const postCreationDraft = reactive({
   location: '',
   latitude: null as number | null,
   longitude: null as number | null,
+  expirationHours: null as number | null,
   isResolvingLocation: false,
 })
 
@@ -44,6 +45,7 @@ export function clearPostCreationDraft() {
   postCreationDraft.location = ''
   postCreationDraft.latitude = null
   postCreationDraft.longitude = null
+  postCreationDraft.expirationHours = null
   postCreationDraft.isResolvingLocation = false
 }
 
@@ -56,8 +58,9 @@ export function usePostCreation() {
 
   const canEdit = computed(() => !isSubmitting.value && !pendingPost.value)
   const canSubmit = computed(() => !isSubmitting.value && !draft.isResolvingLocation
-    && (draft.latitude === null) === (draft.longitude === null)
-    && (draft.latitude === null || !!draft.location.trim()))
+    && draft.latitude !== null && draft.longitude !== null && !!draft.location.trim()
+    && draft.expirationHours !== null && Number.isInteger(draft.expirationHours)
+    && draft.expirationHours >= 1 && draft.expirationHours <= 240)
 
   function validate() {
     const title = draft.title.trim()
@@ -66,12 +69,21 @@ export function usePostCreation() {
       error.value = 'Saisissez un titre de 3 à 128 caractères et une description de 1 à 5000 caractères.'
       return null
     }
-    if (draft.isResolvingLocation || (draft.latitude !== null && !draft.location.trim())
-      || (draft.latitude === null) !== (draft.longitude === null)) {
+    if (draft.isResolvingLocation) {
       error.value = 'Attendez que le lieu sélectionné soit disponible.'
       return null
     }
-    return { title, description }
+    if (draft.latitude === null || draft.longitude === null || !draft.location.trim()) {
+      error.value = 'Ajoutez un lieu avant de publier.'
+      return null
+    }
+    if (draft.expirationHours === null || !Number.isInteger(draft.expirationHours)
+      || draft.expirationHours < 1 || draft.expirationHours > 240) {
+      error.value = 'Choisissez une durée de publication entre 1 heure et 10 jours.'
+      return null
+    }
+    return { title, description, location: draft.location.trim(), latitude: draft.latitude,
+      longitude: draft.longitude, expiration_hours: draft.expirationHours }
   }
 
   async function publish(): Promise<CommunityPost | null> {
@@ -94,9 +106,6 @@ export function usePostCreation() {
       if (!post) {
         post = await createPost({
           ...fields,
-          location: draft.location.trim() || undefined,
-          latitude: draft.latitude ?? undefined,
-          longitude: draft.longitude ?? undefined,
           images: draft.image ? [{ image_index: 0 }] : [],
         }, token)
         pendingPost.value = post

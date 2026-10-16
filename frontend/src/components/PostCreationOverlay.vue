@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import type { CommunityPost } from '../types/post'
 import LoadImage from './LoadImage.vue'
 import AddLocalisation from './AddLocalisation.vue'
+import DateSelectionButton from './dateSelectionButton.vue'
 import { usePostCreation } from '../composables/usePostCreation'
 
 const emit = defineEmits<{ close: []; created: [post: CommunityPost]; selectLocation: [] }>()
@@ -18,7 +19,7 @@ function requestClose() {
 }
 
 function trapFocus(event: KeyboardEvent) {
-  const elements = panel.value?.querySelectorAll<HTMLElement>('input:not(:disabled), textarea:not(:disabled), button:not(:disabled), a[href]')
+  const elements = panel.value?.querySelectorAll<HTMLElement>('input:not(:disabled), textarea:not(:disabled), select:not(:disabled), button:not(:disabled), [role="spinbutton"][tabindex="0"], a[href]')
   if (!elements?.length) {
     event.preventDefault()
     panel.value?.focus()
@@ -71,6 +72,7 @@ async function submit() {
           :is-loading="draft.isResolvingLocation"
           @select="emit('selectLocation')"
         />
+        <DateSelectionButton v-model="draft.expirationHours" :disabled="!canEdit" />
         <div v-if="error" class="post-creation-error" role="alert">
           <p>{{ error }}</p>
           <RouterLink v-if="needsLogin" :to="{ name: 'login' }">Se connecter</RouterLink>
@@ -143,12 +145,14 @@ async function submit() {
 
 .publish-button {
   align-self: center;
-  margin-top: auto;
-  padding: 10px 24px;
+  min-width: 180px;
+  padding: 14px 40px;
   border: 0;
   border-radius: 6px;
   background: #2563eb;
   color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
 }
 </style>

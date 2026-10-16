@@ -15,7 +15,7 @@ class PostEntity(SQLModel, table=True):
         CheckConstraint("latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180", name="post_coordinate_range"),
         CheckConstraint("content_type = 'publication' OR latitude IS NOT NULL", name="post_required_coordinates"),
         CheckConstraint("(content_type = 'event' AND starts_at IS NOT NULL AND ends_at IS NOT NULL AND ends_at > starts_at) OR (content_type <> 'event' AND starts_at IS NULL AND ends_at IS NULL)", name="post_event_dates"),
-        CheckConstraint("(content_type IN ('urban_alert', 'safety_alert') AND expires_at IS NOT NULL AND expires_at > created_at) OR (content_type NOT IN ('urban_alert', 'safety_alert') AND expires_at IS NULL AND closed_at IS NULL)", name="post_alert_lifecycle"),
+        CheckConstraint("(content_type IN ('urban_alert', 'safety_alert') AND expires_at IS NOT NULL AND expires_at > created_at) OR (content_type = 'publication' AND closed_at IS NULL AND (expires_at IS NULL OR expires_at > created_at)) OR (content_type = 'event' AND expires_at IS NULL AND closed_at IS NULL)", name="post_alert_lifecycle"),
         Index("ix_post_created_at", "created_at"),
         Index("ix_post_content_type_expires_at", "content_type", "expires_at"),
     )

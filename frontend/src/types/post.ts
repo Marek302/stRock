@@ -28,7 +28,9 @@ export interface PostItem {
   title: string
   description: string
   imageUrl?: string
-  location?: string
+  hasLocation: boolean
+  latitude: number | null
+  longitude: number | null
   startsAt?: string
   endsAt?: string
 }

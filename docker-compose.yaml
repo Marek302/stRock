@@ -39,9 +39,6 @@ services:
     networks:
       - rock-on-network
       - rock-on-post
-    depends_on:
-      post-db:
-        condition: service_healthy
     restart: unless-stopped
 
   messaging-backend:

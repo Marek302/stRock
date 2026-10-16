@@ -11,7 +11,7 @@ class PostMapper:
         post_id = uuid4()
         return PostEntity(
             id=post_id, user_id=user_id,
-            **schema.model_dump(exclude={"images"}),
+            **schema.model_dump(exclude={"images", "expiration_hours"}),
             images=[ImageEntity(id=(image_id := uuid4()), post_id=post_id,
                 image_index=img.image_index,
                 image_path=f"/{user_id}/{post_id}/{image_id}") for img in schema.images],
