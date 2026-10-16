@@ -7,6 +7,7 @@ export interface PostLocation {
 
 export interface CommunityPost extends PostLocation {
   user_id: string;
+  created_at: string;
   title: string;
   description: string;
   content_type: "publication" | "event" | "urban_alert" | "safety_alert";
@@ -34,6 +35,7 @@ export interface PostItem {
   longitude: number | null;
   images?: string[];
   location?: string;
+  createdAt?: string;
   startsAt?: string;
   endsAt?: string;
 }

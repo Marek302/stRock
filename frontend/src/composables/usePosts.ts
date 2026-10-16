@@ -14,6 +14,7 @@ export function toPostItem(post: CommunityPost): PostItem {
     title: post.title,
     description: post.description,
     userId: post.user_id,
+    createdAt: post.created_at,
     hasLocation:
       post.latitude != null &&
       post.longitude != null &&

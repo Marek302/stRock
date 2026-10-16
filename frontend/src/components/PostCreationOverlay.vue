@@ -82,7 +82,21 @@ async function submit() {
           :is-loading="draft.isResolvingLocation"
           @select="emit('selectLocation')"
         />
-        <DateSelectionButton v-if="draft.contentType === 'publication'" v-model="draft.expirationHours" :disabled="!canEdit" />
+        <label v-if="draft.contentType === 'publication'" class="flex items-center gap-2">
+          <input v-model="draft.isEvent" type="checkbox" :disabled="!canEdit" />
+          <span>Cette publication annonce un événement</span>
+        </label>
+        <template v-if="draft.contentType === 'publication' && draft.isEvent">
+          <label class="post-creation-field">
+            <span>Date et heure de début de l’événement</span>
+            <input v-model="draft.startsAt" type="datetime-local" required :disabled="!canEdit" />
+          </label>
+          <label class="post-creation-field">
+            <span>Date et heure de fin de l’événement</span>
+            <input v-model="draft.endsAt" type="datetime-local" :min="draft.startsAt" required :disabled="!canEdit" />
+          </label>
+        </template>
+        <DateSelectionButton v-if="draft.contentType === 'publication' && !draft.isEvent" v-model="draft.expirationHours" :disabled="!canEdit" />
         <div v-if="error" class="post-creation-error" role="alert">
           <p>{{ error }}</p>
           <RouterLink v-if="needsLogin" :to="{ name: 'login' }">Se connecter</RouterLink>

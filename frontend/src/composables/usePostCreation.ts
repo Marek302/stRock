@@ -5,6 +5,9 @@ import type { CommunityPost } from '../types/post'
 
 export const postCreationDraft = reactive({
   contentType: 'publication' as 'publication' | 'safety_alert',
+  isEvent: false,
+  startsAt: '',
+  endsAt: '',
   title: '',
   description: '',
   image: null as File | null,
@@ -41,6 +44,9 @@ export async function selectPostLocation(latitude: number, longitude: number) {
 export function clearPostCreationDraft() {
   locationRequest++
   postCreationDraft.contentType = 'publication'
+  postCreationDraft.isEvent = false
+  postCreationDraft.startsAt = ''
+  postCreationDraft.endsAt = ''
   postCreationDraft.title = ''
   postCreationDraft.description = ''
   postCreationDraft.image = null
@@ -59,10 +65,15 @@ export function usePostCreation() {
   const pendingPost = ref<CommunityPost | null>(null)
 
   const canEdit = computed(() => !isSubmitting.value && !pendingPost.value)
-  const canSubmit = computed(() => !isSubmitting.value && !draft.isResolvingLocation
-    && draft.latitude !== null && draft.longitude !== null && !!draft.location.trim()
-    && (draft.contentType === 'safety_alert' || (draft.expirationHours !== null && Number.isInteger(draft.expirationHours)
-    && draft.expirationHours >= 1 && draft.expirationHours <= 240)))
+  const canSubmit = computed(() => {
+    if (isSubmitting.value || draft.isResolvingLocation || draft.latitude === null
+      || draft.longitude === null || !draft.location.trim()) return false
+    if (draft.contentType === 'safety_alert') return true
+    if (draft.isEvent) return !!draft.startsAt && !!draft.endsAt
+      && new Date(draft.endsAt).getTime() > new Date(draft.startsAt).getTime()
+    return draft.expirationHours !== null && Number.isInteger(draft.expirationHours)
+      && draft.expirationHours >= 1 && draft.expirationHours <= 240
+  })
 
   function validate() {
     const title = draft.title.trim()
@@ -79,14 +90,24 @@ export function usePostCreation() {
       error.value = 'Ajoutez un lieu avant de publier.'
       return null
     }
-    if (draft.contentType === 'publication' && (draft.expirationHours === null || !Number.isInteger(draft.expirationHours)
+    if (draft.contentType === 'publication' && !draft.isEvent && (draft.expirationHours === null || !Number.isInteger(draft.expirationHours)
       || draft.expirationHours < 1 || draft.expirationHours > 240)) {
       error.value = 'Choisissez une durée de publication entre 1 heure et 10 jours.'
       return null
     }
+    const isEvent = draft.contentType === 'publication' && draft.isEvent
+    if (isEvent && (!draft.startsAt || !draft.endsAt
+      || !Number.isFinite(new Date(draft.startsAt).getTime())
+      || !Number.isFinite(new Date(draft.endsAt).getTime())
+      || new Date(draft.endsAt) <= new Date(draft.startsAt))) {
+      error.value = 'Choisissez un début et une fin pour l’événement, avec une fin après le début.'
+      return null
+    }
     return { title, description, location: draft.location.trim(), latitude: draft.latitude,
-      longitude: draft.longitude, content_type: draft.contentType,
-      ...(draft.contentType === 'publication' ? { expiration_hours: draft.expirationHours! } : {}) }
+      longitude: draft.longitude, content_type: isEvent ? 'event' as const : draft.contentType,
+      ...(isEvent ? { starts_at: new Date(draft.startsAt).toISOString(), ends_at: new Date(draft.endsAt).toISOString() }
+        : draft.contentType === 'publication' ? { expiration_hours: draft.expirationHours! } : {}) }
+
   }
 
   async function publish(): Promise<CommunityPost | null> {

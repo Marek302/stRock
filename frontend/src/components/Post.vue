@@ -10,6 +10,7 @@ const props = defineProps<{
   title: string;
   description: string;
   hasLocation: boolean;
+  createdAt?: string;
   startsAt?: string;
   endsAt?: string;
   imageUrl?: string;
@@ -154,8 +155,11 @@ const emit = defineEmits<{
       />
       <span>Par {{ demoAuthor.displayName }}</span>
     </div>
+    <p v-if="createdAt" class="mt-2 text-center text-sm text-slate-500">
+      Publié le <time :datetime="createdAt">{{ formatDate(createdAt) }}</time>
+    </p>
     <p v-if="startsAt" class="mt-2 text-center text-sm text-slate-600">
-      <time :datetime="startsAt">{{ formatDate(startsAt) }}</time>
+      Événement : <time :datetime="startsAt">{{ formatDate(startsAt) }}</time>
       <template v-if="endsAt">
         — <time :datetime="endsAt">{{ formatDate(endsAt) }}</time></template
       >
@@ -257,7 +261,7 @@ const emit = defineEmits<{
         @click="emit('viewLocation', props.postId)"
       />
       <Button
-        class="min-h-11 w-full"
+        class="contact-author-button min-h-11 w-full"
         label="Contacter l’auteur"
         @click="emit('contact', props.userId)"
       />
@@ -266,6 +270,19 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+.contact-author-button {
+  --p-button-primary-background: #c05a20;
+  --p-button-primary-border-color: #c05a20;
+  --p-button-primary-color: #fff;
+  --p-button-primary-hover-background: #a94e1b;
+  --p-button-primary-hover-border-color: #a94e1b;
+  --p-button-primary-hover-color: #fff;
+  --p-button-primary-active-background: #914217;
+  --p-button-primary-active-border-color: #914217;
+  --p-button-primary-active-color: #fff;
+  --p-button-primary-focus-ring-color: #c05a20;
+}
+
 .post {
   display: flex;
   flex-direction: column;

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
+import { isConversationOpen } from './composables/useMessagingLayout'
 import AppNavbar from './components/AppNavbar.vue'
 import ProfilButton from './components/ProfilButton.vue'
 import logo from '../logo/1.png'
@@ -23,12 +24,18 @@ watch(() => route.meta.order, (to, from) => {
       </Transition>
     </RouterView>
   </div>
-  <AppNavbar />
+  <AppNavbar :class="{ 'mobile-chat-hidden': route.name === 'messages' && isConversationOpen }" />
   <ProfilButton />
   <img :src="logo" class="app-logo" alt="roch-On!" />
 </template>
 
 <style>
+@media (max-width: 767px) {
+  .navbar.mobile-chat-hidden {
+    display: none;
+  }
+}
+
 .app-logo {
   position: fixed;
   z-index: 1000;

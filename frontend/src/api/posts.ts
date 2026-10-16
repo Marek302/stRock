@@ -48,7 +48,9 @@ export async function createPost(
     location: string
     latitude: number
     longitude: number
-    content_type: 'publication' | 'safety_alert'
+    content_type: 'publication' | 'event' | 'safety_alert'
+    starts_at?: string
+    ends_at?: string
     expiration_hours?: number
     images?: { image_index: number }[]
   },

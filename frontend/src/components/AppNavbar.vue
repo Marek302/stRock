@@ -85,6 +85,7 @@ function selectSection(index: number) {
   isolation: isolate;
   position: fixed;
   z-index: 1000;
+  top: auto;
   bottom: 0;
   left: 0;
   width: 100%;

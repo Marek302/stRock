@@ -18,8 +18,8 @@ async function signInWithGoogle() {
   } catch (error) {
     const message = error instanceof Error ? error.message : '';
     errorMsg.value = message.includes('popup') || message.includes('closed')
-      ? 'Sign-in popup was closed or blocked. You can retry.'
-      : 'Sign in failed. Please try again.';
+      ? 'La fenêtre de connexion a été fermée ou bloquée. Vous pouvez réessayer.'
+      : 'La connexion a échoué. Veuillez réessayer.';
   } finally {
     isLoading.value = false;
   }
@@ -72,7 +72,7 @@ async function signInWithGoogle() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
           />
         </svg>
-        <span>{{ isLoading ? 'Connecting to Google...' : 'Continue with Google' }}</span>
+        <span>{{ isLoading ? 'Connexion à Google…' : 'Continuer avec Google' }}</span>
       </button>
     </div>
   </main>

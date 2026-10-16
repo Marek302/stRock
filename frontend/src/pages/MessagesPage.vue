@@ -9,6 +9,7 @@ import {
   MessageSquare,
 } from 'lucide-vue-next';
 import { useRoute } from 'vue-router';
+import { isConversationOpen } from '../composables/useMessagingLayout';
 import { mergeMessage } from '../api/messageEvents';
 import { auth } from '../profile-auth/firebase';
 import {
@@ -21,6 +22,7 @@ import {
 const route = useRoute();
 const conversations = ref<ConversationDTO[]>([]);
 const selectedConvo = ref<ConversationDTO | null>(null);
+watch(selectedConvo, conversation => { isConversationOpen.value = !!conversation; }, { immediate: true });
 const messages = ref<MessageDTO[]>([]);
 const otherProfiles = ref<Record<string, OtherUserProfile>>({});
 const activeProfile = ref<OtherUserProfile | null>(null);
@@ -199,7 +201,7 @@ function formatTime(isoString?: string) {
 </script>
 
 <template>
-  <div class="page messages-page w-full bg-slate-50 flex flex-col overflow-hidden text-slate-900">
+  <div class="page messages-page w-full bg-slate-50 flex flex-col overflow-hidden text-slate-900" :class="{ 'messages-page--conversation': selectedConvo }">
     <header class="bg-white border-b border-slate-200 px-4 h-12 flex items-center shrink-0">
       <span class="font-bold text-sm tracking-tight text-slate-900">Messagerie</span>
     </header>
@@ -402,6 +404,12 @@ function formatTime(isoString?: string) {
 .messages-page {
   padding-top: calc(112px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 767px) {
+  .messages-page--conversation {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 @media (min-width: 768px) {

@@ -71,10 +71,10 @@ onBeforeUnmount(() => instance?.remove())
 }
 
 .map-post--report {
-  background: #fecaca;
-  color: #b91c1c;
+  background: #dc2626;
+  color: #fff;
 }
 .map-post--report:focus-visible {
-  outline-color: #b91c1c;
+  outline-color: #dc2626;
 }
 </style>

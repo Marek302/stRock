@@ -223,6 +223,7 @@ async function contactAuthor(postId: string, userId: string | number) {
         :has-location="post.hasLocation"
         :images="post.images"
         :location="post.location"
+        :created-at="post.createdAt"
         :starts-at="post.startsAt"
         :ends-at="post.endsAt"
         :contacting="contactingPostId === post.id"
