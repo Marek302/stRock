@@ -23,6 +23,8 @@ from sqlmodel import Session
 from app.services.post_service import PostService
 from app.services.file_service import FileService
 from app.exception_handlers import add_exception_handlers
+from fastapi.middleware.cors import CORSMiddleware
+
 
 async def default_identifier(request: Union[Request, WebSocket]):
     """Implemente le rate limit par user id"""
@@ -120,6 +122,20 @@ def create_application() -> FastAPI:
 
 firebase_app = initialize_app()
 app = create_application()
+
+origins = [
+    "http://localhost:5173",      
+    "http://127.0.0.1:5173",          
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],          
+    allow_headers=["*"],              
+)
 
 
 @app.get("/")

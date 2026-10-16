@@ -4,6 +4,11 @@ import { getPosts } from "../api/posts";
 import type { CommunityPost, PostItem } from "../types/post";
 
 export function toPostItem(post: CommunityPost): PostItem {
+  const images = (post.images ?? [])
+    .slice()
+    .sort((a, b) => (a.image_index ?? 0) - (b.image_index ?? 0))
+    .map((img) => `${POST_API_BASE_URL}/images/${img.id}`);
+
   return {
     id: post.id,
     title: post.title,
@@ -18,9 +23,8 @@ export function toPostItem(post: CommunityPost): PostItem {
     longitude: post.longitude,
     startsAt: post.starts_at ?? undefined,
     endsAt: post.ends_at ?? undefined,
-    imageUrl: post.images[0]
-      ? `${POST_API_BASE_URL}/images/${post.images[0].id}`
-      : undefined,
+    imageUrl: images[0],
+    images,
   };
 }
 

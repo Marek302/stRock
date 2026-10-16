@@ -1,9 +1,9 @@
-import demoUsers from '../data/demo-users.json';
-import { auth, db } from '../profile-auth/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import demoUsers from "../data/demo-users.json";
+import { auth, db } from "../profile-auth/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 // In production / docker, this defaults to your reverse proxy root or env var
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || '';
+const MESSAGING_API_BASE_URL = "http://messaging.localhost:8080";
 
 export interface LastMessageDTO {
   content: string;
@@ -39,7 +39,7 @@ export interface OtherUserProfile {
 async function getAuthHeaders(): Promise<HeadersInit> {
   const token = await auth.currentUser?.getIdToken();
   return {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
@@ -48,81 +48,116 @@ export const MessagingApi = {
   // 1. GET /messaging/conversations
   async getConversations(): Promise<ConversationDTO[]> {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/messaging/conversations`, { headers });
-    if (!res.ok) throw new Error('Failed to fetch conversations');
+    const res = await fetch(
+      `${MESSAGING_API_BASE_URL}/messaging/conversations`,
+      { headers },
+    );
+    if (!res.ok) throw new Error("Failed to fetch conversations");
     return res.json();
   },
- // Inside your MessagingApi object:
-    async createConversation(listingId: string): Promise<ConversationDTO> {
+  // Inside your MessagingApi object:
+  async createConversation(listingId: string): Promise<ConversationDTO> {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/messaging/conversations`, {
-        method: 'POST',
+    const res = await fetch(
+      `${MESSAGING_API_BASE_URL}/messaging/conversations`,
+      {
+        method: "POST",
         headers,
         body: JSON.stringify({ listing_id: listingId }),
-    });
+      },
+    );
     if (res.status === 409) {
-      const existing = await fetch(`${API_BASE_URL}/messaging/conversations/${listingId}`, { headers });
-      if (!existing.ok) throw new Error('Impossible de retrouver la discussion.');
+      const existing = await fetch(
+        `${MESSAGING_API_BASE_URL}/messaging/conversations/${listingId}`,
+        { headers },
+      );
+      if (!existing.ok)
+        throw new Error("Impossible de retrouver la discussion.");
       return existing.json();
     }
     if (!res.ok) {
-      if (res.status === 401) throw new Error('Session non reconnue par la messagerie. Reconnectez-vous.');
-      if (res.status === 403) throw new Error('Votre compte ne dispose pas des permissions de messagerie.');
-      if (res.status === 429) throw new Error('Trop de tentatives. Réessayez dans un instant.');
-      throw new Error('Impossible de créer la discussion.');
+      if (res.status === 401)
+        throw new Error(
+          "Session non reconnue par la messagerie. Reconnectez-vous.",
+        );
+      if (res.status === 403)
+        throw new Error(
+          "Votre compte ne dispose pas des permissions de messagerie.",
+        );
+      if (res.status === 429)
+        throw new Error("Trop de tentatives. Réessayez dans un instant.");
+      throw new Error("Impossible de créer la discussion.");
     }
     return res.json();
-    },
+  },
   // 2. GET /messaging/conversations/{id}/messages
   async getMessages(conversationId: string): Promise<MessageDTO[]> {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/messaging/conversations/${conversationId}/messages`, { headers });
-    if (!res.ok) throw new Error('Failed to fetch messages');
+    const res = await fetch(
+      `${MESSAGING_API_BASE_URL}/messaging/conversations/${conversationId}/messages`,
+      { headers },
+    );
+    if (!res.ok) throw new Error("Failed to fetch messages");
     return res.json();
   },
 
   // 3. POST /messaging/conversations/{id}/messages
-  async sendMessage(conversationId: string, content: string): Promise<MessageDTO> {
+  async sendMessage(
+    conversationId: string,
+    content: string,
+  ): Promise<MessageDTO> {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/messaging/conversations/${conversationId}/messages`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ content, image_ids: [] }),
-    });
-    if (!res.ok) throw new Error('Failed to send message');
+    const res = await fetch(
+      `${MESSAGING_API_BASE_URL}/messaging/conversations/${conversationId}/messages`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ content, image_ids: [] }),
+      },
+    );
+    if (!res.ok) throw new Error("Failed to send message");
     return res.json();
   },
 
   // 4. DELETE /messaging/conversations (with { conversation_ids: [id] })
   async deleteConversation(conversationId: string): Promise<void> {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE_URL}/messaging/conversations`, {
-      method: 'DELETE',
-      headers,
-      body: JSON.stringify({ conversation_ids: [conversationId] }),
-    });
-    if (!res.ok && res.status !== 204) throw new Error('Failed to delete conversation');
+    const res = await fetch(
+      `${MESSAGING_API_BASE_URL}/messaging/conversations`,
+      {
+        method: "DELETE",
+        headers,
+        body: JSON.stringify({ conversation_ids: [conversationId] }),
+      },
+    );
+    if (!res.ok && res.status !== 204)
+      throw new Error("Failed to delete conversation");
   },
 
   // 5. POST /messaging/conversations/{id}/read
   async markRead(conversationId: string): Promise<void> {
     const headers = await getAuthHeaders();
-    await fetch(`${API_BASE_URL}/messaging/conversations/${conversationId}/read`, {
-      method: 'POST',
-      headers,
-    });
+    await fetch(
+      `${MESSAGING_API_BASE_URL}/messaging/conversations/${conversationId}/read`,
+      {
+        method: "POST",
+        headers,
+      },
+    );
   },
 
   // 6. Connect WebSocket for live incoming messages
   async connectWebSocket(
     conversationId: string,
-    onMessage: (msg: MessageDTO) => void
+    onMessage: (msg: MessageDTO) => void,
   ): Promise<WebSocket | null> {
     const token = await auth.currentUser?.getIdToken();
     if (!token) return null;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = API_BASE_URL ? API_BASE_URL.replace(/^https?:\/\//, '') : window.location.host;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const host = MESSAGING_API_BASE_URL
+      ? MESSAGING_API_BASE_URL.replace(/^https?:\/\//, "")
+      : window.location.host;
     const wsUrl = `${protocol}//${host}/messaging/ws/conversations/${conversationId}?token=${token}`;
 
     const ws = new WebSocket(wsUrl);
@@ -131,7 +166,7 @@ export const MessagingApi = {
         const data = JSON.parse(event.data);
         onMessage(data);
       } catch (e) {
-        console.error('Failed to parse WS message', e);
+        console.error("Failed to parse WS message", e);
       }
     };
     return ws;
@@ -139,27 +174,27 @@ export const MessagingApi = {
 
   // 7. Get the other person's profile from Firestore using their other_participant_firebase_uid
   async getOtherUserProfile(uid: string): Promise<OtherUserProfile> {
-    const demoUser = demoUsers.find(user => user.uid === uid);
+    const demoUser = demoUsers.find((user) => user.uid === uid);
     if (demoUser) return { ...demoUser };
     try {
-      const snap = await getDoc(doc(db, 'users', uid));
+      const snap = await getDoc(doc(db, "users", uid));
       if (snap.exists()) {
         const data = snap.data();
         return {
           uid,
-          displayName: data.displayName || 'Utilisateur',
-          email: data.email || '',
-          photoURL: data.photoURL || '',
+          displayName: data.displayName || "Utilisateur",
+          email: data.email || "",
+          photoURL: data.photoURL || "",
         };
       }
     } catch (e) {
-      console.warn('Firestore profile lookup note:', e);
+      console.warn("Firestore profile lookup note:", e);
     }
     return {
       uid,
-      displayName: 'Utilisateur',
-      email: '',
-      photoURL: '',
+      displayName: "Utilisateur",
+      email: "",
+      photoURL: "",
     };
   },
 };
