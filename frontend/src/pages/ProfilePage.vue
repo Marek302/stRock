@@ -104,17 +104,7 @@ const handleLogout = async () => {
           </div>
         </div>
 
-        <!-- Log Out Action Button -->
-        <div class="pt-2">
-          <button
-            type="button"
-            @click="handleLogout"
-            class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
-          >
-            <LogOut class="w-4 h-4 text-slate-500" />
-            <span>Se déconnecter</span>
-          </button>
-        </div>
+
       </div>
     </div>
   </main>
