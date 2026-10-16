@@ -93,7 +93,9 @@ class FileService:
         input_stream = io.BytesIO(input_bytes)
         with Image.open(input_stream) as img:
             if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
-                raise StorageException("Transparency is not allowed in uploaded images.")
+                rgba = img.convert("RGBA")
+                background = Image.new("RGBA", rgba.size, "white")
+                img = Image.alpha_composite(background, rgba)
             img = img.convert("RGB")
             output_stream = io.BytesIO()
             img.save(output_stream, format=extension.upper(), quality=80, optimize=True)

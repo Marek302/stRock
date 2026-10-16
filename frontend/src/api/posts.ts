@@ -99,6 +99,9 @@ export async function uploadPostImage(imageId: string, file: File, token: string
     body,
   })
   if (!response.ok) {
+    if (response.status === 413) throw new Error('L’image est trop volumineuse (10 Mo maximum).')
+    const details = await response.json().catch(() => null)
+    if (typeof details?.detail === 'string') throw new Error(`Impossible d’envoyer l’image : ${details.detail}`)
     throw new Error(`Impossible d’envoyer l’image (HTTP ${response.status}).`)
   }
 }

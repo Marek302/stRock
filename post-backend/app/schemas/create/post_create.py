@@ -24,6 +24,12 @@ class PostCreate(PostDetails):
             raise ValueError("La durée personnalisée est réservée aux publications")
         return self
 
+    @model_validator(mode="after")
+    def reject_report_images(self):
+        if self.content_type == PostType.SAFETY_ALERT and self.images:
+            raise ValueError("Les signalements ne comportent pas d’image")
+        return self
+
     @field_validator("images")
     @classmethod
     def unique_image_indexes(cls, images):

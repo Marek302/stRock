@@ -293,7 +293,7 @@ const emit = defineEmits<{
   overflow-wrap: anywhere;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  background: white;
+  background: #eff6ff;
 }
 
 @media (min-width: 768px) {

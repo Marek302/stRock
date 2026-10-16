@@ -130,11 +130,11 @@ export function usePostCreation() {
       if (!post) {
         post = await createPost({
           ...fields,
-          images: draft.image ? [{ image_index: 0 }] : [],
+          images: draft.contentType !== 'safety_alert' && draft.image ? [{ image_index: 0 }] : [],
         }, token)
         pendingPost.value = post
       }
-      if (draft.image) {
+      if (draft.contentType !== 'safety_alert' && draft.image) {
         const imageId = post.images[0]?.id
         if (!imageId) throw new Error('Impossible de préparer l’image du post.')
         await uploadPostImage(imageId, draft.image, token)

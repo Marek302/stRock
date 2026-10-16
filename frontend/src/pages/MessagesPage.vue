@@ -206,7 +206,7 @@ function formatTime(isoString?: string) {
       <span class="font-bold text-sm tracking-tight text-slate-900">Messagerie</span>
     </header>
 
-    <div class="min-h-0 flex-1 flex overflow-hidden relative">
+    <div class="min-h-0 min-w-0 w-full flex-1 flex overflow-hidden relative">
       <!-- Liste des conversations -->
       <aside :class="['w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 flex flex-col shrink-0', selectedConvo ? 'hidden md:flex' : 'flex']">
         <div class="p-3 border-b border-slate-100">
@@ -278,13 +278,13 @@ function formatTime(isoString?: string) {
             </button>
 
             <!-- Déclencheur du profil contact (Avatar + Nom) -->
-            <button type="button" @click="showProfileModal = true" class="flex items-center gap-2.5 text-left group">
-              <div class="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center font-bold text-xs text-slate-500">
+            <button type="button" @click="showProfileModal = true" class="min-w-0 flex items-center gap-2.5 text-left group">
+              <div class="w-9 h-9 shrink-0 rounded-full bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center font-bold text-xs text-slate-500">
                 <img v-if="activeProfile?.photoURL" :src="activeProfile.photoURL" class="w-full h-full object-cover" />
                 <span v-else>{{ activeProfile?.displayName?.charAt(0) || 'U' }}</span>
               </div>
               <div class="min-w-0">
-                <span class="block font-bold text-xs text-slate-900 group-hover:text-slate-700 leading-tight">
+                <span class="block truncate font-bold text-xs text-slate-900 group-hover:text-slate-700 leading-tight">
                   {{ activeProfile?.displayName || 'Utilisateur' }}
                 </span>
                 <span class="block text-[11px] text-slate-400">Voir le profil</span>
@@ -296,13 +296,13 @@ function formatTime(isoString?: string) {
         </div>
 
         <!-- Messages -->
-        <div ref="messagesContainer" class="min-h-0 flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref="messagesContainer" class="min-h-0 min-w-0 w-full flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 space-y-3">
           <div
             v-for="msg in messages"
             :key="msg.id"
-            :class="['flex flex-col max-w-[80%] sm:max-w-[70%]', msg.sender_uid === currentUid ? 'ml-auto items-end' : 'mr-auto items-start']"
+            :class="['min-w-0 flex flex-col max-w-[88%] sm:max-w-[70%]', msg.sender_uid === currentUid ? 'ml-auto items-end' : 'mr-auto items-start']"
           >
-            <div :class="['whitespace-pre-wrap break-words px-3.5 py-2 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs', msg.sender_uid === currentUid ? 'bg-slate-900 text-white rounded-br-xs' : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs']">
+            <div :class="['message-bubble max-w-full whitespace-pre-wrap px-3.5 py-2 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs', msg.sender_uid === currentUid ? 'bg-slate-900 text-white rounded-br-xs' : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs']">
               {{ msg.content }}
             </div>
             <span class="text-[10px] text-slate-400 px-1 mt-0.5">
@@ -312,16 +312,16 @@ function formatTime(isoString?: string) {
         </div>
 
         <!-- Saisie message -->
-        <div class="p-3 bg-white border-t border-slate-200 shrink-0">
+        <div class="message-composer min-w-0 w-full p-2 sm:p-3 bg-white border-t border-slate-200 shrink-0">
           <p v-if="sendError" role="alert" class="mb-2 text-sm text-red-700">{{ sendError }}</p>
-          <form @submit.prevent="handleSendMessage" class="flex items-center gap-2">
+          <form @submit.prevent="handleSendMessage" class="min-w-0 w-full flex items-center gap-2">
             <input
               v-model="messageInput"
               type="text"
               placeholder="Écrire un message..."
-              class="min-w-0 flex-1 px-4 py-2 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
+              class="w-0 min-w-0 flex-1 px-3 sm:px-4 py-2 text-base bg-slate-50 rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
             />
-            <button type="submit" :disabled="isSending || !messageInput.trim()" class="p-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 shadow-2xs">
+            <button type="submit" aria-label="Envoyer le message" :disabled="isSending || !messageInput.trim()" class="grid h-11 w-11 shrink-0 place-items-center p-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 shadow-2xs">
               <Send class="w-4 h-4" />
             </button>
           </form>
@@ -401,7 +401,14 @@ function formatTime(isoString?: string) {
 </template>
 
 <style scoped>
+.message-bubble {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .messages-page {
+  min-width: 0;
+  max-width: 100%;
   padding-top: calc(112px + env(safe-area-inset-top, 0px));
   padding-bottom: calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px));
 }

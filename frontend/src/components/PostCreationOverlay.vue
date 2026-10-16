@@ -47,6 +47,7 @@ async function submit() {
     <section
       ref="panel"
       class="post-creation-panel"
+      :class="{ 'post-creation-panel--report': draft.contentType === 'safety_alert' }"
       role="dialog"
       aria-modal="true"
       aria-label="Créer une publication"
@@ -73,7 +74,7 @@ async function submit() {
           <span>Description</span>
           <textarea v-model="draft.description" minlength="1" maxlength="5000" required :disabled="!canEdit"></textarea>
         </label>
-        <LoadImage :initial-file="draft.image" :disabled="!canEdit" @selected="draft.image = $event" />
+        <LoadImage v-if="draft.contentType !== 'safety_alert'" :initial-file="draft.image" :disabled="!canEdit" @selected="draft.image = $event" />
         <AddLocalisation
           :disabled="!canEdit"
           :location="draft.location"
@@ -125,8 +126,13 @@ async function submit() {
   padding: 24px;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  background: white;
+  background: #eff6ff;
   overflow-y: auto;
+}
+
+.post-creation-panel--report {
+  background: #fef2f2;
+  border-color: #fecaca;
 }
 
 .post-creation-form {

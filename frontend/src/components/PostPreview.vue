@@ -59,7 +59,7 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
 </script>
 
 <template>
-  <section class="map-post-card" aria-label="Aperçu de la publication" @click.stop @dblclick.stop @keydown.esc.stop="emit('close')">
+  <section class="map-post-card" :class="{ 'map-post-card--report': post?.content_type === 'safety_alert' }" aria-label="Aperçu de la publication" @click.stop @dblclick.stop @keydown.esc.stop="emit('close')">
     <button type="button" class="close-preview" aria-label="Fermer l’aperçu" @click="emit('close')">×</button>
     <p v-if="loading" role="status">Chargement…</p>
     <div v-else-if="error" role="alert">
@@ -81,6 +81,13 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
 </template>
 
 <style scoped>
+
+.map-post-card.map-post-card--report {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+
 .map-post-card {
   position: absolute;
   top: 24px;
@@ -91,7 +98,7 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
   padding: 20px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
-  background: white;
+  background: #eff6ff;
   box-shadow: 0 8px 28px rgb(15 23 42 / 20%);
   color: #0f172a;
   font-family: inherit;
