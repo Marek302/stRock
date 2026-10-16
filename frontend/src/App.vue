@@ -24,9 +24,11 @@ watch(() => route.meta.order, (to, from) => {
       </Transition>
     </RouterView>
   </div>
-  <AppNavbar :class="{ 'mobile-chat-hidden': route.name === 'messages' && isConversationOpen }" />
-  <ProfilButton />
-  <img :src="logo" class="app-logo" alt="roch-On!" />
+  <div class="app-header">
+    <img :src="logo" class="app-logo" alt="roch-On!" />
+    <AppNavbar :class="{ 'mobile-chat-hidden': route.name === 'messages' && isConversationOpen }" />
+    <ProfilButton />
+  </div>
 </template>
 
 <style>
@@ -36,11 +38,19 @@ watch(() => route.meta.order, (to, from) => {
   }
 }
 
-.app-logo {
+.app-header {
   position: fixed;
   z-index: 1000;
-  top: max(16px, env(safe-area-inset-top, 0px));
-  left: max(16px, env(safe-area-inset-left, 0px));
+  top: max(8px, env(safe-area-inset-top, 0px));
+  left: 24px;
+  right: 24px;
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.app-logo {
   width: 128px;
   height: auto;
   pointer-events: none;
@@ -84,6 +94,22 @@ watch(() => route.meta.order, (to, from) => {
   .page-slide-right-enter-active,
   .page-slide-right-leave-active {
     transition: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .app-logo {
+    width: 128px;
+  }
+
+  .app-header .profil-button {
+    position: static;
   }
 }
 </style>

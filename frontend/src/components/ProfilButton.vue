@@ -54,8 +54,8 @@ const router = useRouter()
 
 @media (min-width: 768px) {
   .profil-button {
-    top: 18px;
-    right: max(24px, env(safe-area-inset-right, 0px));
+    position: static;
+    justify-self: end;
     width: 64px;
     height: 64px;
   }

@@ -110,12 +110,10 @@ function selectSection(index: number) {
 
 @media (min-width: 768px) {
   .navbar {
-    top: 24px;
-    bottom: auto;
-    left: 50%;
+    position: static;
     width: 420px;
     height: 68px;
-    transform: translateX(-50%);
+    transform: none;
     border-radius: 999px;
   }
 }
