@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import AppNavbar from './components/AppNavbar.vue'
 import ProfilButton from './components/ProfilButton.vue'
+import logo from '../logo/1.png'
 
 const route = useRoute()
 const transitionName = ref('page-slide-left')
@@ -24,9 +25,20 @@ watch(() => route.meta.order, (to, from) => {
   </div>
   <AppNavbar />
   <ProfilButton />
+  <img :src="logo" class="app-logo" alt="roch-On!" />
 </template>
 
 <style>
+.app-logo {
+  position: fixed;
+  z-index: 1000;
+  top: max(16px, env(safe-area-inset-top, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  width: 128px;
+  height: auto;
+  pointer-events: none;
+}
+
 .page-viewport {
   position: relative;
   width: 100%;
