@@ -28,6 +28,7 @@ export interface PostItem {
   title: string
   description: string
   imageUrl?: string
+  images?: string[]
   location?: string
   startsAt?: string
   endsAt?: string

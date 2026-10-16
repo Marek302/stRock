@@ -57,6 +57,7 @@ watch(() => route.name === 'posts' ? route.query.post : undefined, async (id, _p
         :description="post.description"
         :user-id="post.userId"
         :image-url="post.imageUrl"
+        :images="post.images"
         :location="post.location"
         :starts-at="post.startsAt"
         :ends-at="post.endsAt"
