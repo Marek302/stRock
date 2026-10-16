@@ -10,6 +10,7 @@ from app.models.messaging import (
     MAX_MESSAGE_CONTENT_LENGTH,
     PARTICIPANTS_COUNT,
     SENDER_UID_LENGTH,
+    MIN_UID_LENGTH,
 )
 
 
@@ -22,20 +23,20 @@ class ConversationDTO(BaseModel):
     listing_id: UUID
     created_at: datetime
     last_message: Optional["LastMessageDTO"] = None
-    other_participant_firebase_uid: Optional[str] = Field(None, min_length=SENDER_UID_LENGTH, max_length=SENDER_UID_LENGTH)
+    other_participant_firebase_uid: Optional[str] = Field(None, min_length=MIN_UID_LENGTH, max_length=SENDER_UID_LENGTH)
 
     @field_validator("participants")
     @classmethod
     def check_participants_length(cls, v: List[str]) -> List[str]:
         for p in v:
-            if len(p) != SENDER_UID_LENGTH:
-                raise ValueError(f"Participant UID must be {SENDER_UID_LENGTH} characters long")
+            if not MIN_UID_LENGTH <= len(p) <= SENDER_UID_LENGTH:
+                raise ValueError(f"Participant UID must contain 1 to {SENDER_UID_LENGTH} characters")
         return v
 
 
 class LastMessageDTO(BaseModel):
     content: str
-    sender_uid: str = Field(min_length=SENDER_UID_LENGTH, max_length=SENDER_UID_LENGTH)
+    sender_uid: str = Field(min_length=MIN_UID_LENGTH, max_length=SENDER_UID_LENGTH)
     timestamp: datetime
 
 
@@ -56,7 +57,7 @@ class SendMessageRequest(BaseModel):
 class MessageDTO(BaseModel):
     id: UUID
     conversation_id: UUID
-    sender_uid: str = Field(min_length=SENDER_UID_LENGTH, max_length=SENDER_UID_LENGTH)
+    sender_uid: str = Field(min_length=MIN_UID_LENGTH, max_length=SENDER_UID_LENGTH)
     content: str
     image_ids: Optional[List[UUID]] = None
     timestamp: datetime
@@ -72,8 +73,8 @@ class MessageDTO(BaseModel):
     @classmethod
     def check_read_by_length(cls, v: List[str]) -> List[str]:
         for p in v:
-            if len(p) != SENDER_UID_LENGTH:
-                raise ValueError(f"Participant UID must be {SENDER_UID_LENGTH} characters long")
+            if not MIN_UID_LENGTH <= len(p) <= SENDER_UID_LENGTH:
+                raise ValueError(f"Participant UID must contain 1 to {SENDER_UID_LENGTH} characters")
         return v
 
 class MarkReadResponse(BaseModel):

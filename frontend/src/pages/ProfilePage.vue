@@ -22,7 +22,7 @@ onMounted(async () => {
       profile.value = savedProfile;
     }
   } catch {
-    errorMsg.value = 'Impossible de charger le profil.';
+    // Les informations du compte connecté restent disponibles si Firestore échoue.
   }
 });
 

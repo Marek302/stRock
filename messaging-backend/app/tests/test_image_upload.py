@@ -15,7 +15,7 @@ def auth_headers(test_user_id_1):
 async def test_upload_jpg_success(client, auth_headers, test_user_id_1, test_user_id_2, test_listing_id, mock_listing_service):
     """Test upload d'une image JPG valide"""
     mock_listing = MagicMock()
-    mock_listing.vendor_id = test_user_id_2
+    mock_listing.user_id = test_user_id_2
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
     
     conv_res = await client.post(
@@ -43,7 +43,7 @@ async def test_upload_jpg_success(client, auth_headers, test_user_id_1, test_use
 async def test_upload_webp_success(client, auth_headers, test_user_id_1, test_user_id_2, test_listing_id, mock_listing_service):
     """Test upload d'une image WebP valide"""
     mock_listing = MagicMock()
-    mock_listing.vendor_id = test_user_id_2
+    mock_listing.user_id = test_user_id_2
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
     
     conv_res = await client.post(
@@ -71,7 +71,7 @@ async def test_upload_webp_success(client, auth_headers, test_user_id_1, test_us
 async def test_upload_png_fails_if_transparent(client, auth_headers, test_user_id_1, test_user_id_2, test_listing_id, mock_listing_service):
     """Test upload d'une image PNG qui échoue si elle a de la transparence"""
     mock_listing = MagicMock()
-    mock_listing.vendor_id = test_user_id_2
+    mock_listing.user_id = test_user_id_2
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
     
     conv_res = await client.post(
@@ -97,7 +97,7 @@ async def test_upload_png_fails_if_transparent(client, auth_headers, test_user_i
 async def test_upload_invalid_file_fails(client, auth_headers, test_user_id_1, test_user_id_2, test_listing_id, mock_listing_service):
     """Test upload d'un fichier qui n'est pas une image"""
     mock_listing = MagicMock()
-    mock_listing.vendor_id = test_user_id_2
+    mock_listing.user_id = test_user_id_2
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
     
     conv_res = await client.post(

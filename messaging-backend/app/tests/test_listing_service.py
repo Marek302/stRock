@@ -1,8 +1,8 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 from uuid import uuid4
 from app.services.listing_service import ListingService
-from app.models.listing import Listing
+from app.models.listing import Post
 
 @pytest.fixture
 def listing_service():
@@ -13,23 +13,15 @@ async def test_get_by_id_success(listing_service):
     mock_data = {
         "id": str(listing_id),
         "title": "Test Book",
-        "vendor_id": "vendor123",
-        "book_id": "book123",
+        "created_at": "2026-10-16T12:00:00Z",
+        "user_id": "vendor123",
         "description": "A test book description",
-        "price": 19.99,
-        "damage_state": {"id": "1", "name": "New"},
-        "sold_state": {"id": "1", "name": "Available"},
-        "shipping_offer": {"id": "1", "name": "Standard", "delivery_offer": True},
         "location": "Montreal",
-        "seller_rep": 5,
-        "is_annoted": False,
-        "buyer": None,
         "images": [
             {
                 "id": str(uuid4()),
-                "image_path": "path/to/image.jpg",
                 "image_index": 0,
-                "listing_id": str(listing_id)
+                "post_id": str(listing_id)
             }
         ]
     }
@@ -42,32 +34,25 @@ async def test_get_by_id_success(listing_service):
         
         result = await listing_service.get_by_id(listing_id)
         
-        assert isinstance(result, Listing)
-        assert result.vendor_id == "vendor123"
+        mock_get.assert_awaited_once_with(f"http://post-backend:8000/api/v1/posts/{listing_id}")
+        assert isinstance(result, Post)
+        assert result.user_id == "vendor123"
         assert str(result.id) == str(listing_id)
 
 async def test_get_by_id_partial_images(listing_service):
     listing_id = uuid4()
-    # Real data format from user's curl output
     mock_data = {
         "id": str(listing_id),
-        "vendor_id": "kvG689qMNVequs7iLjWVIK6RUca2",
-        "book_id": "kK8dMQAACAAJ",
+        "user_id": "kvG689qMNVequs7iLjWVIK6RUca2",
         "title": "Calcul 1",
-        "damage_state": {"id": "5c8a7b3c-9f13-485d-8b2a-2feed9a8e4a1", "name": "Comme neuf"},
-        "sold_state": {"id": "26fbcfa4-e63e-4666-8458-c544dff205c0", "name": "Not Sold"},
+        "created_at": "2026-10-16T12:00:00Z",
         "description": "Livre de calcul différentiel et intégral en excellent état.",
-        "price": 45.99,
-        "shipping_offer": {"id": "1345bd31-fff5-489f-af26-1046f961a2ee", "name": "Ship", "delivery_offer": True},
         "location": "Montréal",
-        "is_annoted": False,
-        "seller_rep": 5,
-        "buyer": None,
         "images": [
             {
                 "id": "516f02b6-52c4-4e48-8e4f-5ddee3024878",
                 "image_index": 0,
-                "listing_id": str(listing_id)
+                "post_id": str(listing_id)
             }
         ],
         "extra_field_from_api": "should be ignored"
@@ -81,9 +66,9 @@ async def test_get_by_id_partial_images(listing_service):
         
         result = await listing_service.get_by_id(listing_id)
         
-        assert isinstance(result, Listing)
+        assert isinstance(result, Post)
         assert len(result.images) == 1
-        assert result.images[0].image_path is None
+        assert result.images[0].post_id == listing_id
         assert result.images[0].image_index == 0
         assert result.title == "Calcul 1"
 
@@ -114,3 +99,31 @@ async def test_get_by_id_error(listing_service):
 def test_get_listing_service():
     service = ListingService.get_listing_service()
     assert isinstance(service, ListingService)
+
+@pytest.mark.parametrize("user_id", [None, "", "u" * 129])
+def test_post_requires_valid_author(user_id):
+    from pydantic import ValidationError
+
+    data = {
+        "id": str(uuid4()), "title": "Publication", "description": "Bonjour",
+        "created_at": "2026-10-16T12:00:00Z",
+    }
+    if user_id is not None:
+        data["user_id"] = user_id
+    with pytest.raises(ValidationError):
+        Post.model_validate(data)
+
+
+def test_event_fields_match_publication_response():
+    post = Post.model_validate({
+        "id": str(uuid4()), "user_id": "author123", "title": "Rencontre",
+        "description": "Rencontre du quartier", "content_type": "event",
+        "latitude": 46.81, "longitude": -71.22, "location": "Saint-Roch",
+        "created_at": "2026-10-16T12:00:00Z",
+        "starts_at": "2026-10-17T12:00:00Z", "ends_at": "2026-10-17T14:00:00Z",
+        "expires_at": "2026-10-17T14:00:00Z", "closed_at": None,
+    })
+    assert post.user_id == "author123"
+    assert post.content_type == "event"
+    assert post.starts_at < post.ends_at
+    assert post.images == []

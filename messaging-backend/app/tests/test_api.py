@@ -170,7 +170,7 @@ async def test_create_conversation(client, user1_id, user2_id, listing_id, mock_
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
     
     response = await client.post(
@@ -190,7 +190,7 @@ async def test_create_conversation_conflict(client, user1_id, user2_id, listing_
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     response1 = await client.post(
@@ -214,7 +214,7 @@ async def test_get_conversation_for_listing(client, user1_id, user2_id, listing_
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     create_response = await client.post(
@@ -253,7 +253,7 @@ async def test_send_message(client, user1_id, user2_id, listing_id, mock_listing
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     conv_response = await client.post(
@@ -285,7 +285,7 @@ async def test_send_message_with_images(client, user1_id, user2_id, listing_id, 
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     conv_response = await client.post(
@@ -316,7 +316,7 @@ async def test_list_messages(client, user1_id, user2_id, listing_id, mock_listin
     token2 = create_test_token(user2_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     conv_response = await client.post(
@@ -356,7 +356,7 @@ async def test_get_conversation_success(client, user1_id, user2_id, listing_id, 
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     create_response = await client.post(
@@ -395,7 +395,7 @@ async def test_list_messages_unauthorized(client, user1_id, user2_id, listing_id
     token3 = create_test_token(user3_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     conv_response = await client.post(
@@ -415,7 +415,7 @@ async def test_mark_read(client, user1_id, user2_id, listing_id, mock_listing_se
     token1 = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     conv_response = await client.post(
@@ -464,7 +464,7 @@ async def test_websocket_connection(client, user1_id, user2_id, listing_id, mock
         }
         mock_verify.return_value = FirebaseUserToken(**payload)
         mock_listing = MagicMock()
-        mock_listing.vendor_id = user2_id
+        mock_listing.user_id = user2_id
         mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
         # Use the existing client to create a conversation
@@ -489,7 +489,7 @@ async def test_create_conversation_and_delete_listing_success(client, user1_id, 
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user1_id
+    mock_listing.user_id = user1_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
     
     response = await client.post(
@@ -512,7 +512,7 @@ async def test_delete_listing_forbidden(client, user1_id, user2_id, listing_id, 
     token = create_test_token(user1_id)
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = user2_id 
+    mock_listing.user_id = user2_id
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     response = await client.delete(

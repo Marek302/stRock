@@ -17,7 +17,7 @@ from fastapi import (APIRouter,
 
 from app.core.deps import get_messaging_service
 from app.core.security import with_claims
-from app.models.listing import Listing
+from app.models.listing import Post
 from app.models.messaging import Conversation
 from app.schemas.firebase_user_token import FirebaseUserToken
 from app.schemas.messaging import (
@@ -38,6 +38,8 @@ from app.services.messaging_service import (
     ConflictError,
 )
 
+# Tous les comptes Firebase connectés ont accès à la messagerie (CONTEXT.md).
+# Les services contrôlent ensuite l’appartenance à chaque conversation.
 router = APIRouter()
 
 
@@ -92,7 +94,7 @@ def _conversation_to_dto(convo: Conversation, current_user_uid: str) -> Conversa
 async def get_conversation_by_listing_and_participants(
     listing_id: UUID = Query(),
     buyer_id: str = Query(),
-    token: FirebaseUserToken = Depends(with_claims(["messaging:read:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
 ):
     """
@@ -110,19 +112,19 @@ async def get_conversation_by_listing_and_participants(
 @router.get("/conversations/{listing_id}", response_model=ConversationDTO)
 async def get_conversation_for_listing(
     listing_id: UUID,
-    token: FirebaseUserToken = Depends(with_claims(["messaging:read:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
     listing_service: ListingService = Depends(ListingService.get_listing_service),
 ):
     """
     Recupere une conversation existante pour un listing.
     """
-    listing: Listing = await listing_service.get_by_id(listing_id)
+    listing: Post = await listing_service.get_by_id(listing_id)
     if not listing:
         raise HTTPException(status_code=404, detail="Annonce introuvable.")
 
     convo = await service.get_conversation_by_participants(
-        participants=[token.uid, listing.vendor_id], listing_id=listing_id
+        participants=[token.uid, listing.user_id], listing_id=listing_id
     )
     if not convo:
         raise HTTPException(
@@ -135,20 +137,20 @@ async def get_conversation_for_listing(
 @router.post("/conversations", response_model=ConversationDTO, status_code=201)
 async def create_conversation(
     body: CreateConversationRequest,
-    token: FirebaseUserToken = Depends(with_claims(["messaging:create:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
     listing_service: ListingService = Depends(ListingService.get_listing_service),
 ):
     """
     Cree une nouvelle conversation pour un listing.
     """
-    listing: Listing = await listing_service.get_by_id(body.listing_id)
+    listing: Post = await listing_service.get_by_id(body.listing_id)
     if not listing:
         raise HTTPException(status_code=404, detail="Annonce introuvable.")
 
     try:
         convo = await service.create_conversation(
-            participants=[token.uid, listing.vendor_id],
+            participants=[token.uid, listing.user_id],
             listing_id=body.listing_id,
             caller_uid=token.uid,
             caller_firebase_uid=token.uid,
@@ -162,7 +164,7 @@ async def create_conversation(
 
 @router.get("/conversations", response_model=list[ConversationDTO])
 async def list_conversations(
-    token: FirebaseUserToken = Depends(with_claims(["messaging:read:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
 ):
     """
@@ -176,7 +178,7 @@ async def list_conversations(
 @router.get("/conversations/{conversation_id}/messages", response_model=list[MessageDTO])
 async def list_messages(
     conversation_id: UUID,
-    token: FirebaseUserToken = Depends(with_claims(["messaging:read:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
 ):
     """
@@ -206,7 +208,7 @@ async def send_message(
     conversation_id: UUID,
     body: SendMessageRequest,
     request: Request,
-    token: FirebaseUserToken = Depends(with_claims(["messaging:send:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
     listing_service: ListingService = Depends(ListingService.get_listing_service),
 ):
@@ -260,7 +262,7 @@ async def conversation_ws(
     websocket: WebSocket,
     conversation_id: UUID,
 ):
-    token = await _authenticate_websocket(websocket, ["messaging:read:self"])
+    token = await _authenticate_websocket(websocket, [])
     if not token:
         return
 
@@ -292,7 +294,7 @@ async def conversation_ws(
 @router.post("/conversations/{conversation_id}/read", response_model=MarkReadResponse)
 async def mark_read(
     conversation_id: UUID,
-    token: FirebaseUserToken = Depends(with_claims(["messaging:read:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
 ):
     """
@@ -316,7 +318,7 @@ async def mark_read(
 @router.delete("/conversations", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_conversations(
     body: DeleteConversationsRequest,
-    token: FirebaseUserToken = Depends(with_claims(["messaging:create:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     service: MessagingService = Depends(get_messaging_service),
 ):
     """
@@ -334,15 +336,15 @@ async def delete_conversations(
 @router.delete("/listing/{listing_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_conversation_by_listing(
     listing_id: UUID,
-    token: FirebaseUserToken = Depends(with_claims(["messaging:create:self"])),
+    token: FirebaseUserToken = Depends(with_claims([])),
     messaging_service: MessagingService = Depends(get_messaging_service),
     listing_service: ListingService = Depends(ListingService.get_listing_service),
 ):
     """
     Supprime toutes les conversations d'une annonce pour l'utilisateur actuel.
     """
-    listing: Listing = await listing_service.get_by_id(listing_id)
-    if token.uid != listing.vendor_id:
+    listing: Post = await listing_service.get_by_id(listing_id)
+    if token.uid != listing.user_id:
         raise HTTPException(status_code=403, detail="Acces refuse a cette annonce.")
     await messaging_service.delete_conversations_by_listing_id(listing_id, token.uid)
     return

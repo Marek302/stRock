@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, watch, onUnmounted, nextTick } from 'vue';
 import {
   Search,
   Send,
@@ -9,6 +9,7 @@ import {
   X,
   MessageSquare,
 } from 'lucide-vue-next';
+import { useRoute } from 'vue-router';
 import { auth } from '../profile-auth/firebase';
 import {
   MessagingApi,
@@ -17,6 +18,7 @@ import {
   type OtherUserProfile,
 } from '../api/messagingApi';
 
+const route = useRoute();
 const conversations = ref<ConversationDTO[]>([]);
 const selectedConvo = ref<ConversationDTO | null>(null);
 const messages = ref<MessageDTO[]>([]);
@@ -33,10 +35,16 @@ const messagesContainer = ref<HTMLDivElement | null>(null);
 let activeWs: WebSocket | null = null;
 const currentUid = ref(auth.currentUser?.uid || '');
 
-onMounted(async () => {
-  currentUid.value = auth.currentUser?.uid || '';
-  await loadConversations();
-});
+watch(
+  () => route.name === 'messages' ? [route.query.conversation, route.query.user] : null,
+  async (target) => {
+    if (!target) return;
+    await auth.authStateReady();
+    currentUid.value = auth.currentUser?.uid || '';
+    await loadConversations();
+  },
+  { immediate: true },
+);
 
 onUnmounted(() => {
   if (activeWs) activeWs.close();
@@ -53,8 +61,19 @@ async function loadConversations() {
           await MessagingApi.getOtherUserProfile(c.other_participant_firebase_uid);
       }
     }
-    if (conversations.value.length > 0 && !selectedConvo.value) {
-      await selectConversation(conversations.value[0]);
+    if (route.name !== 'messages') return;
+    const requestedId = route.query.conversation;
+    const requestedUser = route.query.user;
+    const target = typeof requestedId === 'string'
+      ? conversations.value.find(c => c.id === requestedId
+          && (typeof requestedUser !== 'string' || c.participants.includes(requestedUser)))
+      : conversations.value.find(c => c.id === selectedConvo.value?.id) || conversations.value[0];
+    if (target) await selectConversation(target);
+    else {
+      selectedConvo.value = null;
+      activeProfile.value = null;
+      messages.value = [];
+      activeWs?.close();
     }
   } catch (err) {
     console.error('Erreur chargement conversations:', err);
@@ -65,6 +84,10 @@ async function loadConversations() {
 
 async function selectConversation(convo: ConversationDTO) {
   selectedConvo.value = convo;
+  messages.value = [];
+  messageInput.value = "";
+  activeProfile.value = null;
+  activeWs?.close();
 
   // Set active profile for the modal
   if (convo.other_participant_firebase_uid) {
@@ -78,12 +101,16 @@ async function selectConversation(convo: ConversationDTO) {
 
   // Load messages from GET /messaging/conversations/{id}/messages
   try {
-    messages.value = await MessagingApi.getMessages(convo.id);
+    const loadedMessages = await MessagingApi.getMessages(convo.id);
+    if (selectedConvo.value?.id !== convo.id) return;
+    messages.value = loadedMessages;
     scrollToBottom();
     MessagingApi.markRead(convo.id);
   } catch (err) {
     console.error('Erreur chargement messages:', err);
   }
+
+  if (selectedConvo.value?.id !== convo.id) return;
 
   // Connect WebSocket for live real-time updates
   if (activeWs) activeWs.close();

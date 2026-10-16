@@ -66,3 +66,21 @@ exportée. Les tests PostgreSQL utilisent les droits du rôle applicatif, sans
 schéma, création, lecture, recherche, pagination, validation des événements,
 expiration SQL, visibilité des alertes, clôture, images et suppression.
 Firebase et l'appel externe à la messagerie sont simulés dans ces tests.
+
+## Auteurs fictifs et messagerie
+
+Les cinq événements de test sont répartis entre Alice (`strock-demo-alice`,
+pique-nique et poutine), Karim (`strock-demo-karim`, livres et art urbain) et
+Léa (`strock-demo-lea`, balade photo). Leurs profils d'affichage sont dans
+`frontend/src/data/demo-users.json`. Ces identités fictives ne sont pas des
+comptes Firebase permettant de se connecter ou de répondre.
+
+Pour réassigner les publications déjà présentes sans réinitialiser la base :
+
+```sh
+docker compose exec -T post-db sh -c 'psql -v ON_ERROR_STOP=1 -U postgres -d "$DB_NAME"' < post-db/sql-scripts/assign-demo-users.sql
+```
+
+Après connexion avec votre compte habituel, « Contacter l’auteur » ouvre la
+conversation du post sélectionné. Deux posts du même auteur restent associés
+à des conversations distinctes. Un nouveau clic retrouve la conversation existante.

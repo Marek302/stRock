@@ -1,3 +1,4 @@
+import demoUsers from '../data/demo-users.json';
 import { auth, db } from '../profile-auth/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -59,7 +60,17 @@ export const MessagingApi = {
         headers,
         body: JSON.stringify({ listing_id: listingId }),
     });
-    if (!res.ok) throw new Error('Impossible de créer la discussion.');
+    if (res.status === 409) {
+      const existing = await fetch(`${API_BASE_URL}/messaging/conversations/${listingId}`, { headers });
+      if (!existing.ok) throw new Error('Impossible de retrouver la discussion.');
+      return existing.json();
+    }
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('Session non reconnue par la messagerie. Reconnectez-vous.');
+      if (res.status === 403) throw new Error('Votre compte ne dispose pas des permissions de messagerie.');
+      if (res.status === 429) throw new Error('Trop de tentatives. Réessayez dans un instant.');
+      throw new Error('Impossible de créer la discussion.');
+    }
     return res.json();
     },
   // 2. GET /messaging/conversations/{id}/messages
@@ -128,6 +139,8 @@ export const MessagingApi = {
 
   // 7. Get the other person's profile from Firestore using their other_participant_firebase_uid
   async getOtherUserProfile(uid: string): Promise<OtherUserProfile> {
+    const demoUser = demoUsers.find(user => user.uid === uid);
+    if (demoUser) return { ...demoUser };
     try {
       const snap = await getDoc(doc(db, 'users', uid));
       if (snap.exists()) {

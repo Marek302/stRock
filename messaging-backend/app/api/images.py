@@ -20,7 +20,7 @@ async def upload_conversation_image(
     image_service: ImageService = Depends(ImageService.get_image_service),
     messaging_service: MessagingService = Depends(get_messaging_service),
     file_service: FileService = Depends(FileService.get_file_service),
-    token: FirebaseUserToken = Depends(with_claims(["messaging:create:self"]))
+    token: FirebaseUserToken = Depends(with_claims([]))
 ) -> ImageDTO:
     """Upload une photo dans une conversation"""
     conversation = await messaging_service.ensure_conversation_member(conversation_id, token.uid)
@@ -33,7 +33,7 @@ async def upload_conversation_image(
 async def get_image_by_id(
     image_id: uuid.UUID,
     file_service: FileService = Depends(FileService.get_file_service),
-    token: FirebaseUserToken = Depends(with_claims(["messaging:read:self"]))
+    token: FirebaseUserToken = Depends(with_claims([]))
     ) -> FileResponse:
     """Récupère une photo de listing par son nom de fichier"""
     path, image_entity, extension = await file_service.get_file(image_id=image_id)

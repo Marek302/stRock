@@ -1,0 +1,20 @@
+[
+  {
+    "uid": "strock-demo-alice",
+    "displayName": "Alice (démo)",
+    "email": "alice@example.test",
+    "photoURL": "/demo-users/alice.png"
+  },
+  {
+    "uid": "strock-demo-karim",
+    "displayName": "Karim (démo)",
+    "email": "karim@example.test",
+    "photoURL": "/demo-users/karim.png"
+  },
+  {
+    "uid": "strock-demo-lea",
+    "displayName": "Léa (démo)",
+    "email": "lea@example.test",
+    "photoURL": "/demo-users/lea.png"
+  }
+]

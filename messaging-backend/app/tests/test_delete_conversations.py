@@ -32,7 +32,7 @@ async def test_delete_conversations_route(client: AsyncClient, test_user_id_1, t
     headers = {"Authorization": f"Bearer {token}"}
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = test_user_id_2
+    mock_listing.user_id = test_user_id_2
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     create_resp = await client.post("/messaging/conversations", json={"listing_id": str(test_listing_id)}, headers=headers)
@@ -53,7 +53,7 @@ async def test_delete_conversations_unauthorized(client: AsyncClient, test_user_
     headers1 = {"Authorization": f"Bearer {token1}"}
     
     mock_listing = MagicMock()
-    mock_listing.vendor_id = test_user_id_2
+    mock_listing.user_id = test_user_id_2
     mock_listing_service.get_by_id = AsyncMock(return_value=mock_listing)
 
     create_resp = await client.post("/messaging/conversations", json={"listing_id": str(test_listing_id)}, headers=headers1)

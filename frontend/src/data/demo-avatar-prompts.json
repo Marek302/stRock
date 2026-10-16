@@ -1,0 +1,17 @@
+{
+  "tool": "image_gen built-in",
+  "prompts": [
+    {
+      "id": "alice",
+      "prompt": "Use case: photorealistic-natural. Asset type: square profile avatar for a fictional neighborhood community app demo user. Subject: Alice, a fictional adult woman around 30 with wavy auburn hair, freckles and an easy smile, wearing a casual sage green sweater. Natural candid head-and-shoulders portrait, centered face with comfortable margins for circular cropping, looking at camera. Soft daylight, subtly blurred Saint-Roch Quebec neighborhood street background. Realistic skin texture, approachable everyday resident, consistent editorial portrait style. One person only, no text, no watermark, no logos. Square image."
+    },
+    {
+      "id": "karim",
+      "prompt": "Use case: photorealistic-natural. Asset type: square profile avatar for a fictional neighborhood community app demo user. Subject: Karim, a fictional adult man around 32 with short dark curly hair, a neatly trimmed beard and a friendly smile, wearing a casual navy overshirt. Natural candid head-and-shoulders portrait, centered face with comfortable margins for circular cropping, looking at camera. Soft daylight, subtly blurred Saint-Roch Quebec neighborhood street background. Realistic skin texture, approachable everyday resident, consistent editorial portrait style. One person only, no text, no watermark, no logos. Square image."
+    },
+    {
+      "id": "lea",
+      "prompt": "Use case: photorealistic-natural. Asset type: square profile avatar for a fictional neighborhood community app demo user. Subject: Léa, a fictional adult woman around 28 with a dark chin-length bob, round glasses and a warm smile, wearing a casual rust-colored jacket. Natural candid head-and-shoulders portrait, centered face with comfortable margins for circular cropping, looking at camera. Soft daylight, subtly blurred Saint-Roch Quebec neighborhood street background. Realistic skin texture, approachable everyday resident, consistent editorial portrait style. One person only, no text, no watermark, no logos. Square image."
+    }
+  ]
+}

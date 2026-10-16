@@ -10,10 +10,11 @@ import { toPostItem, usePosts } from '../composables/usePosts'
 import { MessagingApi } from '../api/messagingApi'
 import { clearPostCreationDraft, selectPostLocation } from '../composables/usePostCreation'
 
-const router = useRouter()
 const { posts, isLoading, error, hasMore, reload, loadMore, loadOnScroll } = usePosts()
 const route = useRoute()
 const router = useRouter()
+const contactingPostId = ref<string | null>(null)
+const contactError = ref('')
 const selectedPost = ref<PostItem | null>(null)
 const selectedLoading = ref(false)
 const selectedError = ref<string | null>(null)
@@ -88,13 +89,23 @@ watch(() => route.name === 'posts' ? route.query.post : undefined, async (id, _p
   }
 }, { immediate: true })
 
-// ⭐️ Fonction pour contacter le vendeur et rediriger vers la messagerie
-async function onContactSeller(postId: string) {
+async function contactAuthor(postId: string, userId: string | number) {
+  if (contactingPostId.value) return
+  contactingPostId.value = postId
+  contactError.value = ''
   try {
-    await MessagingApi.createConversation(postId)
-    await router.push({ name: 'messages' })
+    const conversation = await MessagingApi.createConversation(postId)
+    if (!conversation.participants.includes(String(userId))) {
+      throw new Error('La discussion ne correspond pas à l’auteur de cette publication.')
+    }
+    await router.push({
+      name: 'messages',
+      query: { conversation: conversation.id, user: String(userId) },
+    })
   } catch (err) {
-    console.error('Erreur lors de la création de la discussion:', err)
+    contactError.value = err instanceof Error ? err.message : 'Impossible de contacter l’auteur.'
+  } finally {
+    contactingPostId.value = null
   }
 }
 </script>
@@ -107,6 +118,7 @@ async function onContactSeller(postId: string) {
         <p>{{ selectedError }}</p>
         <RouterLink :to="{ name: 'posts' }" class="mt-3 inline-block min-h-11 underline">Voir toutes les publications</RouterLink>
       </div>
+      <p v-if="contactError" role="alert" class="p-4 text-center text-red-700">{{ contactError }}</p>
       <Post
         v-for="post in displayedPosts"
         :key="post.id"
@@ -120,7 +132,9 @@ async function onContactSeller(postId: string) {
         :location="post.location"
         :starts-at="post.startsAt"
         :ends-at="post.endsAt"
-        @contact="onContactSeller(post.id)"
+        :contacting="contactingPostId === post.id"
+        :contact-disabled="contactingPostId !== null"
+        @contact="contactAuthor(post.id, $event)"
       />
       <div v-if="isLoading || error || !hasMore" class="feed-status p-6 text-center text-slate-600">
         <p v-if="isLoading" role="status">Chargement des publications…</p>

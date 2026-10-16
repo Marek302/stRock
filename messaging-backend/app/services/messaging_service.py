@@ -194,7 +194,7 @@ class MessagingService:
             raise ConflictError("Conversation already exists")
 
         participant_firebase_uids = None
-        if caller_uid and caller_firebase_uid and len(caller_firebase_uid) == 28:
+        if caller_uid and caller_firebase_uid and 1 <= len(caller_firebase_uid) <= 128:
             participant_firebase_uids = {str(caller_uid): caller_firebase_uid}
 
         convo = Conversation(
