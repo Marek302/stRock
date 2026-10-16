@@ -43,10 +43,6 @@ const handleLogout = async () => {
       <!-- Top Bar: roch-on branding & Log Out -->
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2">
-          <div class="w-7 h-7 bg-slate-900 text-white rounded-lg flex items-center justify-center font-black text-xs shadow-2xs">
-            R
-          </div>
-          <span class="font-bold text-slate-900 text-sm tracking-tight">roch-on</span>
         </div>
 
         <button

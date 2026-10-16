@@ -78,8 +78,8 @@ Le centre initial et le zoom sont définis dans `src/components/BackgroundMap.vu
 Le fond de carte nécessite une connexion Internet. L’attribution doit rester visible.
 Conditions du serveur de tuiles : https://operations.osmfoundation.org/policies/tiles/
 
-La carte démarre au centre du quartier Saint-Roch à Québec, avec un niveau de
-zoom minimum de 16, ajusté à la taille de l’écran pour explorer ses rues. Elle ne demande pas la géolocalisation et ne suit pas
+La carte démarre au centre du quartier Saint-Roch à Québec, avec son niveau de
+zoom habituel. Le zoom minimum s’adapte à la taille de l’écran pour afficher tout le secteur. Elle ne demande pas la géolocalisation et ne suit pas
 l’utilisateur : les déplacements et le zoom sont contrôlés manuellement.
 
 ## Limites de Saint-Roch

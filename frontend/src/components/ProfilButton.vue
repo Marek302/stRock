@@ -8,7 +8,7 @@ const router = useRouter()
 </script>
 
 <template>
-  <button type="button" class="profil-button liquid-glass" :style="{ '--profile-icon-filter': `url(#${thinIconId})` }" aria-label="Profil" @click="router.push({ name: 'profile' })">
+  <button type="button" class="profil-button liquid-glass spring-button" :style="{ '--profile-icon-filter': `url(#${thinIconId})` }" aria-label="Profil" @click="router.push({ name: 'profile' })">
     <svg style="position: absolute; width: 0; height: 0" aria-hidden="true" focusable="false">
       <defs>
         <filter :id="thinIconId">
@@ -35,8 +35,6 @@ const router = useRouter()
   height: 56px;
   border-radius: 50%;
   cursor: pointer;
-  transform: scale(1);
-  transition: transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .profil-button :deep(svg.p-icon) {
@@ -52,26 +50,6 @@ const router = useRouter()
 .profil-button:focus-visible {
   outline: 2px solid #0369a1;
   outline-offset: 3px;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .profil-button:hover {
-    transform: scale(1.06, 1.04);
-  }
-}
-
-.profil-button:active {
-  transform: scale(0.94);
-  transition-duration: 100ms;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .profil-button,
-  .profil-button:hover,
-  .profil-button:active {
-    transform: none;
-    transition: none;
-  }
 }
 
 @media (min-width: 768px) {

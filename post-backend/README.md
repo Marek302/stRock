@@ -14,6 +14,7 @@ L'API Post gère le cycle de vie des annonces de livres, incluant les informatio
 
 - `GET /api/v1/posts` : Récupère toutes les annonces avec support pour la pagination et les filtres.
 - `POST /api/v1/posts` : Crée une nouvelle annonce (authentification requise).
+- `GET /api/v1/posts/reverse-geocode?latitude=...&longitude=...` : Renvoie l’adresse canadienne la plus proche du point choisi via geocoder.ca. Les coordonnées sont envoyées à ce service uniquement lors de cette requête.
 - `GET /api/v1/posts/{post_id}` : Récupère les détails d'une annonce spécifique par son ID.
 - `DELETE /api/v1/posts/{post_id}` : Supprime une annonce (propriétaire uniquement).
 - `GET /api/v1/posts/{post_id}/sold-status` : Récupère le statut de vente d'une annonce.

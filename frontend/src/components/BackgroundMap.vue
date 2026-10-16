@@ -25,18 +25,19 @@ onMounted(() => {
     doubleClickZoom: 'center',
     touchZoom: 'center',
     bounceAtZoomLimits: false,
-    minZoom: 16,
+    minZoom: 0,
     maxZoom: 19,
   })
-  instance.setMinZoom(Math.min(19, Math.max(initialZoom, instance.getBoundsZoom(saintRochBounds, true))))
-  instance.setView(saintRochCenter, instance.getMinZoom())
+  const startingZoom = Math.min(19, Math.max(initialZoom, instance.getBoundsZoom(saintRochBounds, true)))
+  instance.setMinZoom(instance.getBoundsZoom(saintRochBounds))
+  instance.setView(saintRochCenter, startingZoom)
 
   removeMovementConstraint = constrainMovement(instance)
 
   new SaintRochLayer({
     noWrap: true,
     keepBuffer: 0,
-    minZoom: 16,
+    minZoom: 0,
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> — contributeurs · Limites : <a href="https://www.donneesquebec.ca/recherche/dataset/5b1ae6f2-6719-46df-bd2f-e57a7034c917">Ville de Québec</a>',
   }).addTo(instance)
@@ -51,12 +52,12 @@ onMounted(() => {
   zoom.getContainer()?.querySelector('.leaflet-control-zoom-in')?.setAttribute('aria-label', 'Zoomer')
   zoom.getContainer()?.querySelector('.leaflet-control-zoom-out')?.setAttribute('aria-label', 'Dézoomer')
 
-  // Keep the same neighborhood-scale minimum zoom on every viewport.
-  // Exterior tiles are dark and desaturated; navigation stops at the polygon edges.
+  // Allow the whole neighborhood to fit on screen; navigation still stops at its polygon edges.
   const updateMinimumZoom = () => {
     if (!instance) return
     instance.invalidateSize({ pan: false })
-    const minimumZoom = Math.min(19, Math.max(16, instance.getBoundsZoom(saintRochBounds, true)))
+    instance.setMinZoom(0)
+    const minimumZoom = instance.getBoundsZoom(saintRochBounds)
     instance.setMinZoom(minimumZoom)
     if (instance.getZoom() < minimumZoom) instance.setZoom(minimumZoom, { animate: false })
   }

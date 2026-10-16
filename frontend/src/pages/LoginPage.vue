@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { UserRound } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import { FirebaseService } from '../profile-auth/firebase';
 
@@ -28,19 +29,16 @@ async function signInWithGoogle() {
 <template>
   <main class="page auth-page bg-slate-50 flex items-center justify-center" aria-label="Connexion">
     <div class="bg-white max-w-sm w-full rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-      <!-- roch-on Brand Header -->
+      <!-- En-tête de connexion -->
       <div class="text-center mb-6">
         <div class="inline-flex items-center justify-center w-12 h-12 bg-slate-900 text-white rounded-2xl font-black text-xl mb-3 shadow-sm tracking-tighter">
-          R
+          <UserRound class="w-6 h-6" aria-hidden="true" />
         </div>
         <div class="flex items-center justify-center gap-1.5">
-          <h1 class="text-2xl font-black tracking-tight text-slate-900">roch-on</h1>
-          <span class="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded">
-            Google Auth
-          </span>
+          <h1 class="text-2xl font-black tracking-tight text-slate-900">Connexion</h1>
         </div>
         <p class="text-xs text-slate-500 mt-1">
-          Sign in to access your profile
+          Connectez-vous pour accéder à votre profil
         </p>
       </div>
 
