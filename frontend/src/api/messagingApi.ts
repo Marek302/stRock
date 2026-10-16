@@ -1,6 +1,6 @@
-import demoUsers from "../data/demo-users.json";
-import { auth, db } from "../profile-auth/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { parseMessageEvent } from './messageEvents';
+import demoUsers from '../data/demo-users.json';
+import { auth } from '../profile-auth/firebase';
 
 // In production / docker, this defaults to your reverse proxy root or env var
 const MESSAGING_API_BASE_URL = "http://messaging.localhost:8080";
@@ -162,39 +162,23 @@ export const MessagingApi = {
 
     const ws = new WebSocket(wsUrl);
     ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
-      } catch (e) {
-        console.error("Failed to parse WS message", e);
-      }
+      const message = parseMessageEvent(event.data);
+      if (message && message.conversation_id === conversationId) onMessage(message);
     };
     return ws;
   },
 
-  // 7. Get the other person's profile from Firestore using their other_participant_firebase_uid
+  // Public profile supplied by the verified conversation participant.
   async getOtherUserProfile(uid: string): Promise<OtherUserProfile> {
     const demoUser = demoUsers.find((user) => user.uid === uid);
     if (demoUser) return { ...demoUser };
-    try {
-      const snap = await getDoc(doc(db, "users", uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        return {
-          uid,
-          displayName: data.displayName || "Utilisateur",
-          email: data.email || "",
-          photoURL: data.photoURL || "",
-        };
-      }
-    } catch (e) {
-      console.warn("Firestore profile lookup note:", e);
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${MESSAGING_API_BASE_URL}/messaging/profiles/${encodeURIComponent(uid)}`, { headers });
+    if (response.ok) {
+      const profile = await response.json();
+      return { uid, displayName: profile.displayName || 'Utilisateur', photoURL: profile.photoURL || '', email: '' };
     }
-    return {
-      uid,
-      displayName: "Utilisateur",
-      email: "",
-      photoURL: "",
-    };
+    if (response.status !== 404) throw new Error('Impossible de charger le profil du contact.');
+    return { uid, displayName: 'Utilisateur', email: '', photoURL: '' };
   },
 };

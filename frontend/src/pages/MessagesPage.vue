@@ -10,6 +10,7 @@ import {
   MessageSquare,
 } from 'lucide-vue-next';
 import { useRoute } from 'vue-router';
+import { mergeMessage } from '../api/messageEvents';
 import { auth } from '../profile-auth/firebase';
 import {
   MessagingApi,
@@ -28,6 +29,8 @@ const activeProfile = ref<OtherUserProfile | null>(null);
 const searchQuery = ref('');
 const messageInput = ref('');
 const isLoading = ref(false);
+const isSending = ref(false);
+const sendError = ref('');
 const showProfileModal = ref(false);
 const convoToDelete = ref<ConversationDTO | null>(null);
 const messagesContainer = ref<HTMLDivElement | null>(null);
@@ -56,9 +59,13 @@ async function loadConversations() {
     conversations.value = await MessagingApi.getConversations();
     // Load profiles for each other participant
     for (const c of conversations.value) {
-      if (c.other_participant_firebase_uid && !otherProfiles.value[c.other_participant_firebase_uid]) {
-        otherProfiles.value[c.other_participant_firebase_uid] =
-          await MessagingApi.getOtherUserProfile(c.other_participant_firebase_uid);
+      if (c.other_participant_firebase_uid) {
+        try {
+          otherProfiles.value[c.other_participant_firebase_uid] =
+            await MessagingApi.getOtherUserProfile(c.other_participant_firebase_uid);
+        } catch (error) {
+          console.error('Erreur chargement du profil du contact:', error);
+        }
       }
     }
     if (route.name !== 'messages') return;
@@ -115,7 +122,8 @@ async function selectConversation(convo: ConversationDTO) {
   // Connect WebSocket for live real-time updates
   if (activeWs) activeWs.close();
   activeWs = await MessagingApi.connectWebSocket(convo.id, (newMsg) => {
-    messages.value.push(newMsg);
+    if (selectedConvo.value?.id !== convo.id) return;
+    messages.value = mergeMessage(messages.value, newMsg);
     convo.last_message = {
       content: newMsg.content,
       sender_uid: newMsg.sender_uid,
@@ -126,21 +134,25 @@ async function selectConversation(convo: ConversationDTO) {
 }
 
 async function handleSendMessage() {
-  if (!messageInput.value.trim() || !selectedConvo.value) return;
+  if (isSending.value || !messageInput.value.trim() || !selectedConvo.value) return;
   const text = messageInput.value.trim();
-  messageInput.value = '';
-
+  const convo = selectedConvo.value;
+  isSending.value = true;
+  sendError.value = '';
   try {
-    const sent = await MessagingApi.sendMessage(selectedConvo.value.id, text);
-    messages.value.push(sent);
-    selectedConvo.value.last_message = {
-      content: sent.content,
-      sender_uid: sent.sender_uid,
-      timestamp: sent.timestamp,
+    const sent = await MessagingApi.sendMessage(convo.id, text);
+    convo.last_message = {
+      content: sent.content, sender_uid: sent.sender_uid, timestamp: sent.timestamp,
     };
-    scrollToBottom();
-  } catch (err) {
-    console.error("Erreur d'envoi du message:", err);
+    if (selectedConvo.value?.id === convo.id) {
+      messages.value = mergeMessage(messages.value, sent);
+      if (messageInput.value.trim() === text) messageInput.value = '';
+      scrollToBottom();
+    }
+  } catch {
+    sendError.value = 'Impossible d’envoyer le message. Réessayez.';
+  } finally {
+    isSending.value = false;
   }
 }
 
@@ -311,7 +323,7 @@ function formatTime(isoString?: string) {
             :key="msg.id"
             :class="['flex flex-col max-w-[80%] sm:max-w-[70%]', msg.sender_uid === currentUid ? 'ml-auto items-end' : 'mr-auto items-start']"
           >
-            <div :class="['px-3.5 py-2 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs', msg.sender_uid === currentUid ? 'bg-slate-900 text-white rounded-br-xs' : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs']">
+            <div :class="['whitespace-pre-wrap break-words px-3.5 py-2 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs', msg.sender_uid === currentUid ? 'bg-slate-900 text-white rounded-br-xs' : 'bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs']">
               {{ msg.content }}
             </div>
             <span class="text-[10px] text-slate-400 px-1 mt-0.5">
@@ -322,6 +334,7 @@ function formatTime(isoString?: string) {
 
         <!-- Saisie message -->
         <div class="p-3 bg-white border-t border-slate-200 shrink-0">
+          <p v-if="sendError" role="alert" class="mb-2 text-sm text-red-700">{{ sendError }}</p>
           <form @submit.prevent="handleSendMessage" class="flex items-center gap-2">
             <input
               v-model="messageInput"
@@ -329,7 +342,7 @@ function formatTime(isoString?: string) {
               placeholder="Écrire un message..."
               class="flex-1 px-4 py-2 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
             />
-            <button type="submit" :disabled="!messageInput.trim()" class="p-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 shadow-2xs">
+            <button type="submit" :disabled="isSending || !messageInput.trim()" class="p-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 shadow-2xs">
               <Send class="w-4 h-4" />
             </button>
           </form>

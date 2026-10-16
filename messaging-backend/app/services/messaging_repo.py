@@ -94,6 +94,19 @@ class MongoMessagingRepository:
         self._conversations = db[conversations_collection]
         self._messages = db[messages_collection]
 
+    async def save_public_profile(self, uid: str, name: str | None, photo: str | None):
+        # Identity and display fields come only from a verified Firebase token.
+        profile = {"uid": uid, "displayName": name or "Utilisateur", "photoURL": photo or ""}
+        await self._db["public_profiles"].update_one({"_id": uid}, {"$set": profile}, upsert=True)
+        return profile
+
+    async def get_contact_profile(self, caller_uid: str, uid: str):
+        if caller_uid != uid:
+            shared = await self._conversations.find_one({"participants": {"$all": [caller_uid, uid]}})
+            if not shared:
+                raise PermissionError("Ce profil est réservé aux participants de la conversation.")
+        return await self._db["public_profiles"].find_one({"_id": uid}, {"_id": 0})
+
     async def ensure_indexes(self) -> None:
         """
         Call once on startup.

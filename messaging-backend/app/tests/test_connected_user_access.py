@@ -18,7 +18,7 @@ class ConnectedUserAccessTests(unittest.TestCase):
     def setUp(self):
         self.app = FastAPI()
         self.app.include_router(router, prefix='/messaging')
-        self.token = SimpleNamespace(uid='connected-user', permissions=[])
+        self.token = SimpleNamespace(uid='connected-user', permissions=[], name='Alice', picture='https://example.test/alice.png')
         self.verifier = SimpleNamespace(verify_id_token=AsyncMock(return_value=self.token))
         self.app.dependency_overrides[get_firebase_token_service] = lambda: self.verifier
         self.repo = AsyncMock()

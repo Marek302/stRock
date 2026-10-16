@@ -90,6 +90,21 @@ def _conversation_to_dto(convo: Conversation, current_user_uid: str) -> Conversa
         other_participant_firebase_uid=other_firebase_uid,
     )
 
+@router.get("/profiles/{uid}")
+async def get_contact_profile(
+    uid: str,
+    token: FirebaseUserToken = Depends(with_claims([])),
+    service: MessagingService = Depends(get_messaging_service),
+):
+    try:
+        profile = await service.repo.get_contact_profile(token.uid, uid)
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profil pas encore synchronisé.")
+    return profile
+
+
 @router.get("/conversations/by-listing-and-participant", response_model=ConversationDTO)
 async def get_conversation_by_listing_and_participants(
     listing_id: UUID = Query(),
@@ -171,6 +186,7 @@ async def list_conversations(
     Liste toutes les conversations de l'utilisateur actuel.
     Chaque conversation inclut other_participant_firebase_uid si connu (pour marquer comme vendu).
     """
+    await service.repo.save_public_profile(token.uid, token.name, token.picture)
     convos = await service.list_user_conversations(token.uid)
     return [_conversation_to_dto(c, token.uid) for c in convos]
 
