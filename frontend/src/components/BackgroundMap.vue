@@ -36,7 +36,7 @@ onMounted(() => {
 
   new SaintRochLayer({
     noWrap: true,
-    keepBuffer: 0,
+    keepBuffer: 2,
     minZoom: 0,
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> — contributeurs · Limites : <a href="https://www.donneesquebec.ca/recherche/dataset/5b1ae6f2-6719-46df-bd2f-e57a7034c917">Ville de Québec</a>',

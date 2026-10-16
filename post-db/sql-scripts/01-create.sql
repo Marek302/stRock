@@ -66,7 +66,8 @@ CREATE TABLE IF NOT EXISTS post (
         OR (content_type <> 'event' AND starts_at IS NULL AND ends_at IS NULL)),
     CONSTRAINT post_alert_lifecycle CHECK (
         (content_type IN ('urban_alert', 'safety_alert') AND expires_at IS NOT NULL AND expires_at > created_at)
-        OR (content_type NOT IN ('urban_alert', 'safety_alert') AND expires_at IS NULL AND closed_at IS NULL))
+        OR (content_type = 'publication' AND closed_at IS NULL AND (expires_at IS NULL OR expires_at > created_at))
+        OR (content_type = 'event' AND expires_at IS NULL AND closed_at IS NULL))
 );
 CREATE INDEX IF NOT EXISTS ix_post_user_id ON post(user_id);
 CREATE INDEX IF NOT EXISTS ix_post_created_at ON post(created_at);

@@ -40,8 +40,8 @@ services:
       - rock-on-network
       - rock-on-post
     depends_on:
-      post-db:
-        condition: service_healthy
+      post-db-migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   messaging-backend:
@@ -78,6 +78,23 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  post-db-migrate:
+    image: post-db:latest
+    env_file:
+      - post-db/.env
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        PGPASSWORD="$${POSTGRES_PASSWORD}" psql -v ON_ERROR_STOP=1
+        -h post-db -U postgres -d "$${DB_NAME}"
+        -f /migrations/01-publication-expiration.sql
+    networks:
+      - rock-on-post
+    depends_on:
+      post-db:
+        condition: service_healthy
+    restart: "no"
 
   messaging-db:
     image: messaging-db:latest

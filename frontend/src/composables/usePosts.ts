@@ -9,7 +9,10 @@ export function toPostItem(post: CommunityPost): PostItem {
     title: post.title,
     description: post.description,
     userId: post.user_id,
-    location: post.location ?? undefined,
+    hasLocation: post.latitude != null && post.longitude != null
+      && Number.isFinite(post.latitude) && Number.isFinite(post.longitude),
+    latitude: post.latitude,
+    longitude: post.longitude,
     startsAt: post.starts_at ?? undefined,
     endsAt: post.ends_at ?? undefined,
     imageUrl: post.images[0] ? `${API_BASE_URL}/images/${post.images[0].id}` : undefined,

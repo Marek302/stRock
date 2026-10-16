@@ -26,6 +26,7 @@ onMounted(() => {
     keyboard: false,
   }).addTo(props.map)
   target.value = element
+  if (props.selected) instance.setZIndexOffset(1000)
 })
 
 watch(() => [props.latitude, props.longitude], () => {
@@ -34,10 +35,6 @@ watch(() => [props.latitude, props.longitude], () => {
 
 watch(() => props.selected, (selected) => {
   instance?.setZIndexOffset(selected ? 1000 : 0)
-  if (!selected) return
-  props.map.panInside([props.latitude, props.longitude], {
-    paddingTopLeft: [150, 190], paddingBottomRight: [150, 180],
-  })
 })
 
 onBeforeUnmount(() => instance?.remove())
@@ -71,4 +68,5 @@ onBeforeUnmount(() => instance?.remove())
   outline: 2px solid #1d4ed8;
   outline-offset: 2px;
 }
+
 </style>

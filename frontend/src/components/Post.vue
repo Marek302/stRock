@@ -2,9 +2,10 @@
 import Button from 'primevue/button'
 
 const props = defineProps<{
+  postId: string
   title: string
   description: string
-  location?: string
+  hasLocation: boolean
   startsAt?: string
   endsAt?: string
   imageUrl?: string
@@ -19,13 +20,13 @@ function formatDate(value: string) {
 
 const emit = defineEmits<{
   contact: [userId: string | number]
+  viewLocation: [postId: string]
 }>()
 </script>
 
 <template>
   <article class="post" :aria-label="title">
     <h2 class="text-center text-2xl font-semibold text-slate-900">{{ title }}</h2>
-    <p v-if="location" class="mt-4 text-center text-sm text-slate-600">{{ location }}</p>
     <p v-if="startsAt" class="mt-2 text-center text-sm text-slate-600">
       <time :datetime="startsAt">{{ formatDate(startsAt) }}</time>
       <template v-if="endsAt"> — <time :datetime="endsAt">{{ formatDate(endsAt) }}</time></template>
@@ -40,6 +41,7 @@ const emit = defineEmits<{
     />
     <p class="mt-6 whitespace-pre-line text-base leading-relaxed text-slate-600">{{ description }}</p>
     <footer class="pt-6">
+      <Button v-if="hasLocation" class="mb-3 min-h-11 w-full" label="Voir le lieu" severity="secondary" @click="emit('viewLocation', props.postId)" />
       <Button class="min-h-11 w-full" label="Contacter l’auteur" @click="emit('contact', props.userId)" />
     </footer>
   </article>

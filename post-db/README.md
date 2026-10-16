@@ -9,14 +9,16 @@ Le schéma suit `../CONTEXT.md`. Les identités Firebase sont référencées par
 cascade. Les images sont facultatives. Il n'y a aucun prix, livre, livraison,
 acheteur ou réputation dans le nouveau modèle.
 
-- `publication` : fil et carte si les deux coordonnées sont renseignées.
+- `publication` : lieu et durée de 1 heure à 10 jours obligatoires; supprimée après expiration.
 - `event` : coordonnées, début et fin obligatoires; fin après début.
 - `urban_alert` : coordonnées obligatoires; fil et carte tant qu'active.
 - `safety_alert` : coordonnées obligatoires; carte uniquement.
 
-Les dates utilisent `TIMESTAMPTZ`. Les alertes expirent après deux heures par
-défaut (service et trigger PostgreSQL). L'API exclut les alertes expirées ou
-clôturées des listes; les données restent disponibles pour consultation directe.
+Les dates utilisent `TIMESTAMPTZ`. Les publications expirées sont masquées immédiatement
+par l'API, puis supprimées avec leurs images par une tâche exécutée chaque minute.
+Les alertes expirent après deux heures par défaut (service et trigger PostgreSQL).
+L'API exclut les alertes expirées ou clôturées des listes; elles restent
+consultables par identifiant.
 `PATCH /api/v1/posts/{id}/close` permet à l'auteur de clôturer une alerte.
 La route `/api/v1/posts/locations` conserve exactement les champs `id`,
 `latitude`, `longitude` et exclut les publications sans coordonnées.
@@ -26,7 +28,23 @@ La route `/api/v1/posts/locations` conserve exactement les champs `id`,
 `sql-scripts/01-create.sql` crée directement la base, les tables `post` et
 `image`, leurs contraintes, les index et le trigger d'expiration des alertes.
 Il est exécuté par `shell-scripts/00-init.sh` à l'initialisation PostgreSQL.
-`03-insert.sql` est utilisé en production; `03-insert.test.sql` en mode test.
+`02-insert.sql` est utilisé en production; `02-insert.test.sql` en mode test.
+
+Pour une base déjà initialisée, le service `post-db-migrate` applique
+`migrations/01-publication-expiration.sql` avec le rôle propriétaire de la table
+`post` avant le démarrage du backend avec Docker Compose. Reconstruire les images
+pour prendre en compte le nouveau schéma et la nouvelle API :
+
+```sh
+docker compose up -d --build
+```
+
+Hors Docker Compose, appliquer la migration avec un rôle propriétaire de la table
+`post` avant de démarrer le backend :
+
+```sh
+psql -v ON_ERROR_STOP=1 -d NOM_BASE -f post-db/migrations/01-publication-expiration.sql
+```
 
 Les installations de test ajoutent cinq événements explicitement fictifs dans
 des lieux réels de Saint-Roch. Pour les ajouter manuellement :

@@ -15,11 +15,31 @@ const isPickingLocation = computed(() => route.name === 'map' && route.query.pic
 const locationError = ref<string | null>(null)
 const mapInstance = shallowRef<Map | null>(null)
 const selectedPostId = ref<string | null>(null)
+const requestedPostId = computed(() => route.name === 'map' && typeof route.query.post === 'string'
+  ? route.query.post : null)
+const activePostId = computed(() => requestedPostId.value || selectedPostId.value)
+
+function selectPreview(postId: string) {
+  selectedPostId.value = postId
+  void router.replace({ name: 'map', query: {
+    ...route.query, post: postId, latitude: undefined, longitude: undefined,
+  } })
+}
+
+function closePreview() {
+  selectedPostId.value = null
+  if (requestedPostId.value) {
+    void router.replace({ name: 'map', query: {
+      ...route.query, post: undefined, latitude: undefined, longitude: undefined,
+    } })
+  }
+}
+
 watch(mapInstance, (map, _previous, onCleanup) => {
   if (!map) return
   const onMapClick = (event: { latlng: { lat: number; lng: number } }) => {
     if (!isPickingLocation.value) {
-      selectedPostId.value = null
+      closePreview()
       return
     }
     const { lat, lng } = event.latlng
@@ -42,13 +62,56 @@ watch(isPickingLocation, (picking) => {
 })
 watch(() => route.name, (name, previous) => {
   if (name === 'map' && previous !== 'map') void reload()
+  if (name !== 'map') selectedPostId.value = null
 })
-const positionedPosts = computed(() => locations.value.filter(
-  (post): post is { id: string; latitude: number; longitude: number } =>
-    post.latitude != null && post.longitude != null
-    && Number.isFinite(post.latitude) && Number.isFinite(post.longitude)
-    && Math.abs(post.latitude) <= 90 && Math.abs(post.longitude) <= 180,
-))
+const linkedLocation = computed(() => {
+  if (!requestedPostId.value || typeof route.query.latitude !== 'string'
+    || typeof route.query.longitude !== 'string') return null
+  const latitude = Number(route.query.latitude)
+  const longitude = Number(route.query.longitude)
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
+    || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null
+  return { id: requestedPostId.value, latitude, longitude }
+})
+const positionedPosts = computed(() => {
+  const posts = locations.value.filter(
+    (post): post is { id: string; latitude: number; longitude: number } =>
+      post.latitude != null && post.longitude != null
+      && Number.isFinite(post.latitude) && Number.isFinite(post.longitude)
+      && Math.abs(post.latitude) <= 90 && Math.abs(post.longitude) <= 180,
+  )
+  const linked = linkedLocation.value
+  if (linked && !posts.some(post => post.id === linked.id)) {
+    return [...posts, linked]
+  }
+  return posts
+})
+const selectedLocation = computed(() => positionedPosts.value.find(post => post.id === activePostId.value))
+let centeredPostId: string | null = null
+let centeredMap: Map | null = null
+
+watch(
+  [mapInstance, selectedLocation, activePostId, isPickingLocation, () => route.name],
+  ([map, post, postId, picking, page]) => {
+    if (page !== 'map' || picking || !postId) {
+      centeredPostId = null
+      return
+    }
+    if (!map || !post || (centeredMap === map && centeredPostId === postId)) return
+
+    // Centrer une seule fois, puis laisser la carte libre au déplacement.
+    map.invalidateSize({ pan: false })
+    const target: [number, number] = [post.latitude, post.longitude]
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      map.setView(target, map.getZoom(), { animate: false })
+    } else {
+      map.flyTo(target, map.getZoom(), { animate: true, duration: 0.8 })
+    }
+    centeredMap = map
+    centeredPostId = postId
+  },
+  { immediate: true, flush: 'post' },
+)
 </script>
 
 <template>
@@ -60,9 +123,9 @@ const positionedPosts = computed(() => locations.value.filter(
         :key="post.id"
         :map="mapInstance"
         :post-id="post.id"
-        :selected="selectedPostId === post.id"
-        @select="selectedPostId = post.id"
-        @close="selectedPostId = null"
+        :selected="activePostId === post.id"
+        @select="selectPreview(post.id)"
+        @close="closePreview"
         :latitude="post.latitude"
         :longitude="post.longitude"
       />

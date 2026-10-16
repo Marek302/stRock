@@ -35,11 +35,20 @@ export async function getPost(id: string, signal?: AbortSignal): Promise<Communi
   return response.json()
 }
 
+export async function getNearestPostAddress(
+  id: string, signal?: AbortSignal,
+): Promise<{ address: string; source: 'saved' | 'openstreetmap' }> {
+  const response = await apiFetch(`/posts/${encodeURIComponent(id)}/nearest-address`, { signal })
+  if (!response.ok) throw new Error(`Impossible de trouver l’adresse de la publication (HTTP ${response.status}).`)
+  return response.json()
+}
+
 export async function createPost(
   input: Pick<CommunityPost, 'title' | 'description'> & {
-    location?: string
-    latitude?: number
-    longitude?: number
+    location: string
+    latitude: number
+    longitude: number
+    expiration_hours: number
     images?: { image_index: number }[]
   },
   token: string,
@@ -58,7 +67,18 @@ export async function createPost(
       throw new Error('Votre session a expiré. Reconnectez-vous pour publier.')
     }
     if (response.status === 422) {
-      throw new Error('Vérifiez le titre et la description de la publication.')
+      const body: unknown = await response.json().catch(() => null)
+      if (body && typeof body === 'object' && 'detail' in body) {
+        const detail = body.detail
+        if (Array.isArray(detail) && detail.some((issue) =>
+          issue && typeof issue === 'object' && issue.type === 'extra_forbidden'
+          && Array.isArray(issue.loc) && issue.loc.includes('expiration_hours')
+        )) {
+          throw new Error('Le serveur de publication ne prend pas encore en charge la durée. Mettez à jour l’API pour publier.')
+        }
+        if (typeof detail === 'string' && detail.trim()) throw new Error(detail)
+      }
+      throw new Error('Vérifiez le titre, la description, le lieu et la durée de la publication.')
     }
     throw new Error(`Impossible de publier la publication (HTTP ${response.status}).`)
   }

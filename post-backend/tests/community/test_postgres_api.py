@@ -53,8 +53,12 @@ class PostgresApiTests(unittest.TestCase):
         self.engine.dispose()
 
     def create(self, **values):
-        data = dict(title='Activité de test', description='Détails à rechercher quartier')
+        data = dict(title='Activité de test', description='Détails à rechercher quartier',
+                    location='Saint-Roch', latitude=46.81, longitude=-71.22,
+                    expiration_hours=24)
         data.update(values)
+        if data.get('content_type', 'publication') != 'publication' and 'expiration_hours' not in values:
+            data.pop('expiration_hours')
         response = self.client.post('/api/v1/posts', json=data, headers=self.headers)
         self.assertEqual(response.status_code, 201, response.text)
         return response.json()['post']
@@ -70,6 +74,9 @@ class PostgresApiTests(unittest.TestCase):
 
     def test_create_read_search_and_pagination(self):
         created = self.create(location='Saint-Roch', images=[{'image_index': 0}])
+        self.assertEqual(datetime.fromisoformat(created['expires_at'].replace('Z','+00:00'))
+                         - datetime.fromisoformat(created['created_at'].replace('Z','+00:00')),
+                         timedelta(hours=24))
         result = self.client.get(f"/api/v1/posts/{created['id']}")
         self.assertEqual(result.status_code, 200, result.text)
         self.assertNotIn('price', result.json())
@@ -87,12 +94,28 @@ class PostgresApiTests(unittest.TestCase):
     def test_request_validation_matches_database_constraints(self):
         now = datetime.now(timezone.utc).isoformat()
         for values in [dict(price=5), dict(images=[{'image_index': 0}, {'image_index': 0}]),
-                       dict(images=[{'image_index': 11}]), dict(latitude=46.8),
-                       dict(latitude=91, longitude=-71), dict(content_type='safety_alert'),
+                       dict(images=[{'image_index': 11}]), dict(longitude=None),
+                       dict(latitude=91, longitude=-71),
+                       dict(content_type='safety_alert', latitude=None, longitude=None),
                        dict(content_type='event', latitude=46.8, longitude=-71, starts_at=now, ends_at=now),
                        dict(content_type='event', latitude=46.8, longitude=-71, starts_at='2026-10-20T12:00:00', ends_at='2026-10-20T14:00:00')]:
             with self.subTest(values=values):
-                response = self.client.post('/api/v1/posts', json=dict(title='Test', description='Détails', **values), headers=self.headers)
+                data = dict(title='Test', description='Détails', location='Saint-Roch',
+                            latitude=46.81, longitude=-71.22, expiration_hours=1)
+                data.update(values)
+                if data.get('content_type', 'publication') != 'publication' and 'expiration_hours' not in values:
+                    data.pop('expiration_hours')
+                response = self.client.post('/api/v1/posts', json=data, headers=self.headers)
+                self.assertEqual(response.status_code, 422, response.text)
+        for values in [dict(title='Test', description='Détails'),
+                       dict(title='Test', description='Détails', location='Saint-Roch'),
+                       dict(title='Test', description='Détails', latitude=46.81, longitude=-71.22),
+                       dict(title='Test', description='Détails', location='   ', latitude=46.81, longitude=-71.22),
+                       dict(title='Test', description='Détails', location='Saint-Roch', latitude=46.81, longitude=-71.22),
+                       dict(title='Test', description='Détails', location='Saint-Roch', latitude=46.81, longitude=-71.22, expiration_hours=0),
+                       dict(title='Test', description='Détails', location='Saint-Roch', latitude=46.81, longitude=-71.22, expiration_hours=241)]:
+            with self.subTest(values=values):
+                response = self.client.post('/api/v1/posts', json=values, headers=self.headers)
                 self.assertEqual(response.status_code, 422, response.text)
         self.assertEqual(self.client.post('/api/v1/posts', json={'title':'Test', 'description':'Détails'}).status_code, 401)
 

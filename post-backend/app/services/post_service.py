@@ -21,7 +21,9 @@ class PostService:
 
     def create(self, post, user_id):
         entity = PostMapper.to_entity(post, user_id)
-        if entity.content_type in (PostType.URBAN_ALERT, PostType.SAFETY_ALERT):
+        if entity.content_type == PostType.PUBLICATION:
+            entity.expires_at = entity.created_at + timedelta(hours=post.expiration_hours)
+        elif entity.content_type in (PostType.URBAN_ALERT, PostType.SAFETY_ALERT):
             entity.expires_at = entity.created_at + timedelta(hours=2)
         return self.save(entity)
 
@@ -36,10 +38,28 @@ class PostService:
             key = UUID(str(post_id))
         except (ValueError, TypeError):
             raise NotFoundException(f"Post with id {post_id} not found")
-        post = self.session.get(PostEntity, key)
+        post = self.session.exec(select(PostEntity).where(
+            PostEntity.id == key,
+            or_(PostEntity.content_type != PostType.PUBLICATION,
+                col(PostEntity.expires_at).is_(None),
+                PostEntity.expires_at > datetime.now(timezone.utc)),
+        )).first()
         if post is None:
             raise NotFoundException(f"Post with id {post_id} not found")
         return post
+
+    def delete_expired_publications(self):
+        statement = select(PostEntity).where(
+            PostEntity.content_type == PostType.PUBLICATION,
+            col(PostEntity.expires_at).is_not(None),
+            PostEntity.expires_at <= datetime.now(timezone.utc),
+        )
+        expired = self.session.exec(statement).all()
+        for post in expired:
+            self.session.delete(post)
+        if expired:
+            self.session.commit()
+        return len(expired)
 
     def delete_by_id(self, entity):
         self.session.delete(entity)

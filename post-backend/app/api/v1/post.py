@@ -17,6 +17,7 @@ from app.schemas.create.post_create import PostCreate
 from app.schemas.summary.post_location import PostLocation
 from app.core.security import with_claims, optional_with_claims
 from app.services.messaging_service import MessagingService
+from app.services.nearest_address_service import NearestAddressService, has_saved_address
 
 router = APIRouter(redirect_slashes=False)
 
@@ -75,6 +76,26 @@ async def reverse_geocode(
         raise HTTPException(status_code=404, detail="Aucune adresse trouvée pour ce point")
     address = ", ".join(part for part in (street, field("city"), field("prov")) if part)
     return {"address": address[:256]}
+
+
+@router.get("/{post_id}/nearest-address")
+async def get_nearest_post_address(
+    post_id: str,
+    service: PostService = Depends(PostService.get_post_service),
+):
+    """Retourne l'adresse enregistrée ou cherche la plus proche pour l'aperçu."""
+    entity = service.get_by_id(post_id)
+    if has_saved_address(entity.location):
+        return {"address": entity.location.strip(), "source": "saved"}
+    if entity.latitude is None or entity.longitude is None:
+        raise HTTPException(status_code=404, detail="Aucune adresse disponible pour ce post")
+    try:
+        address = await NearestAddressService.lookup(entity.latitude, entity.longitude)
+    except (httpx.HTTPError, ValueError) as exc:
+        raise HTTPException(status_code=502, detail="Service de recherche d’adresse indisponible") from exc
+    if not address:
+        raise HTTPException(status_code=404, detail="Aucune adresse trouvée pour ce post")
+    return {"address": address, "source": "openstreetmap"}
 
 
 @router.post("", status_code=201)

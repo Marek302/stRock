@@ -1,25 +1,53 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getPost } from '../api/posts'
+import { getPost, getNearestPostAddress } from '../api/posts'
 import type { CommunityPost } from '../types/post'
 
 const props = defineProps<{ postId: string }>()
 const emit = defineEmits<{ close: [] }>()
 
 const post = ref<CommunityPost | null>(null)
+const address = ref<string | null>(null)
+const addressSource = ref<'saved' | 'openstreetmap' | null>(null)
+const addressUnavailable = ref(false)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const retry = ref(0)
+const coordinateLabel = /^lat:\s*-?\d+(?:\.\d+)?,\s*lon:\s*-?\d+(?:\.\d+)?$/i
 
 watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
   const controller = new AbortController()
   onCleanup(() => controller.abort())
   post.value = null
+  address.value = null
+  addressSource.value = null
+  addressUnavailable.value = false
   error.value = null
   loading.value = true
   try {
-    post.value = await getPost(props.postId, controller.signal)
+    const loadedPost = await getPost(props.postId, controller.signal)
+    post.value = loadedPost
+    loading.value = false
+
+    const savedLocation = loadedPost.location?.trim()
+    if (savedLocation && !coordinateLabel.test(savedLocation)) {
+      address.value = savedLocation
+      addressSource.value = 'saved'
+    } else if (loadedPost.latitude != null && loadedPost.longitude != null) {
+      try {
+        const nearest = await getNearestPostAddress(props.postId, controller.signal)
+        if (!controller.signal.aborted) {
+          address.value = nearest.address.trim() || null
+          addressSource.value = nearest.source
+          addressUnavailable.value = !address.value
+        }
+      } catch {
+        if (!controller.signal.aborted) addressUnavailable.value = true
+      }
+    } else {
+      addressUnavailable.value = true
+    }
   } catch (cause) {
     if (!controller.signal.aborted) {
       error.value = cause instanceof Error ? cause.message : 'Impossible de charger la publication.'
@@ -41,6 +69,11 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
     <template v-else-if="post">
       <h2 class="preview-title">{{ post.title }}</h2>
       <p class="preview-description">{{ post.description }}</p>
+      <p v-if="address" class="preview-address">
+        {{ address }}
+        <small v-if="addressSource === 'openstreetmap'" class="address-credit">© OpenStreetMap contributors</small>
+      </p>
+      <p v-else-if="addressUnavailable" class="preview-address">Adresse indisponible</p>
       <RouterLink class="view-post" :to="{ name: 'posts', query: { post: postId } }">Voir la publication</RouterLink>
     </template>
   </section>
@@ -51,7 +84,6 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
   position: absolute;
   top: 24px;
   left: 24px;
-  transform: translate(-50%, -50%);
   width: min(280px, calc(100vw - 32px));
   max-height: min(320px, calc(100dvh - 200px));
   overflow-y: auto;
@@ -66,6 +98,7 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
   line-height: 1.5;
   cursor: default;
   overflow-wrap: anywhere;
+  transform: translate(-50%, -50%);
   transform-origin: center;
   animation: preview-open 340ms ease-out both;
 }
@@ -73,7 +106,7 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
 @keyframes preview-open {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.2);
+    transform: translate(-50%, -50%) scale(0.9);
   }
   72% {
     opacity: 1;
@@ -116,9 +149,21 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
 .preview-description {
   max-height: 144px;
   overflow-y: auto;
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   white-space: pre-line;
   color: #475569;
+}
+
+.preview-address {
+  margin: 0 0 16px;
+  color: #334155;
+}
+
+.address-credit {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 11px;
 }
 
 .view-post {
