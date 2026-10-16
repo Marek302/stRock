@@ -1,4 +1,5 @@
 export interface PostLocation {
+  content_type: "publication" | "event" | "urban_alert" | "safety_alert";
   id: string;
   latitude: number | null;
   longitude: number | null;

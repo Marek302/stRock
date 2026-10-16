@@ -50,6 +50,18 @@ class CommunityTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             PostCreate(title='Test', description='Détails', price=12)
 
+    def test_report_is_map_only_with_type_in_locations(self):
+        publication = self.create()
+        report = self.create(content_type='safety_alert')
+        feed_ids = {str(post.id) for post in self.service.list_all()}
+        self.assertIn(str(publication.id), feed_ids)
+        self.assertNotIn(str(report.id), feed_ids)
+        locations = self.client.get('/posts/locations').json()
+        marker = next(item for item in locations if item['id'] == str(report.id))
+        self.assertEqual(marker['content_type'], 'safety_alert')
+        self.assertEqual(marker['latitude'], report.latitude)
+        self.assertNotIn(report.id, {post.id for post in self.service.get_by_user('demo-user')})
+
     def test_invalid_coordinates_and_event_dates(self):
         now = datetime.now(timezone.utc)
         for args in [dict(latitude=None), dict(longitude=None),
@@ -125,7 +137,7 @@ class CommunityTests(unittest.TestCase):
         self.assertEqual({p.id for p in self.service.list_locations()}, {plain.id, located.id, event.id})
         response = self.client.get('/posts/locations')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(set(response.json()[0]), {'id', 'latitude', 'longitude'})
+        self.assertEqual(set(response.json()[0]), {'id', 'latitude', 'longitude', 'content_type'})
         self.assertEqual({p.id for p in self.service.list_all(search='activité')}, {plain.id, located.id, event.id})
 
     def test_database_rejects_unlocated_safety_alert(self):

@@ -48,7 +48,8 @@ export async function createPost(
     location: string
     latitude: number
     longitude: number
-    expiration_hours: number
+    content_type: 'publication' | 'safety_alert'
+    expiration_hours?: number
     images?: { image_index: number }[]
   },
   token: string,
@@ -59,7 +60,7 @@ export async function createPost(
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ ...input, content_type: 'publication' }),
+    body: JSON.stringify(input),
   })
 
   if (!response.ok) {

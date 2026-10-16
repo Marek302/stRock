@@ -1,5 +1,6 @@
 """Coordonnées géographiques d'une publication."""
 from uuid import UUID
+from app.schemas.post import PostType
 
 from pydantic import BaseModel, ConfigDict
 
@@ -9,6 +10,7 @@ class PostLocation(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    content_type: PostType
     id: UUID
     latitude: float | None
     longitude: float | None

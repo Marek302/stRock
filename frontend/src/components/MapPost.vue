@@ -9,6 +9,7 @@ const props = defineProps<{
   postId: string
   latitude: number
   longitude: number
+  isReport?: boolean
   selected: boolean
 }>()
 const emit = defineEmits<{ select: []; close: [] }>()
@@ -45,7 +46,7 @@ onBeforeUnmount(() => instance?.remove())
     <Transition name="post-preview">
       <PostPreview v-if="selected" :post-id="postId" @close="emit('close')" />
     </Transition>
-    <button v-if="!selected" type="button" class="map-post" aria-label="Voir cette publication" @click.stop="emit('select')">
+    <button v-if="!selected" type="button" class="map-post" :class="{ 'map-post--report': isReport }" :aria-label="isReport ? 'Voir ce signalement' : 'Voir cette publication'" @click.stop="emit('select')">
       <MapMarker size="24" aria-hidden="true" />
     </button>
   </Teleport>
@@ -60,7 +61,7 @@ onBeforeUnmount(() => instance?.remove())
   height: 48px;
   border: 0;
   border-radius: 50%;
-  background: rgb(59 130 246 / 40%);
+  background: #b1cdfb;
   color: #1d4ed8;
 }
 
@@ -69,4 +70,11 @@ onBeforeUnmount(() => instance?.remove())
   outline-offset: 2px;
 }
 
+.map-post--report {
+  background: #fecaca;
+  color: #b91c1c;
+}
+.map-post--report:focus-visible {
+  outline-color: #b91c1c;
+}
 </style>

@@ -56,6 +56,16 @@ async function submit() {
     >
       <form class="post-creation-form" :aria-busy="isSubmitting" @submit.prevent="submit">
         <label class="post-creation-field">
+          <span>Type</span>
+          <select v-model="draft.contentType" :disabled="!canEdit">
+            <option value="publication">Publication</option>
+            <option value="safety_alert">Signalement</option>
+          </select>
+        </label>
+        <p v-if="draft.contentType === 'safety_alert'" class="text-sm text-slate-600">
+          Visible uniquement sur la carte pendant 2 heures, avec un repère rouge.
+        </p>
+        <label class="post-creation-field">
           <span>Titre</span>
           <input ref="titleInput" v-model="draft.title" type="text" minlength="3" maxlength="128" required :disabled="!canEdit" />
         </label>
@@ -72,7 +82,7 @@ async function submit() {
           :is-loading="draft.isResolvingLocation"
           @select="emit('selectLocation')"
         />
-        <DateSelectionButton v-model="draft.expirationHours" :disabled="!canEdit" />
+        <DateSelectionButton v-if="draft.contentType === 'publication'" v-model="draft.expirationHours" :disabled="!canEdit" />
         <div v-if="error" class="post-creation-error" role="alert">
           <p>{{ error }}</p>
           <RouterLink v-if="needsLogin" :to="{ name: 'login' }">Se connecter</RouterLink>
@@ -119,7 +129,8 @@ async function submit() {
 }
 
 .post-creation-field input,
-.post-creation-field textarea {
+.post-creation-field textarea,
+.post-creation-field select {
   width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 6px;

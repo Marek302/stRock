@@ -68,7 +68,11 @@ function showPostLocation(post: PostItem) {
 
 async function handleCreated(post: CommunityPost) {
   await closeCreation();
-  await router.replace({ name: "posts", query: { post: post.id } });
+  if (post.content_type === 'safety_alert') {
+    await router.replace({ name: 'map', query: { post: post.id } });
+  } else {
+    await router.replace({ name: "posts", query: { post: post.id } });
+  }
   void reload();
 }
 
@@ -120,7 +124,12 @@ watch(
     onCleanup(() => controller.abort());
     selectedLoading.value = true;
     try {
-      selectedPost.value = toPostItem(await getPost(id, controller.signal));
+      const loadedPost = await getPost(id, controller.signal);
+      if (loadedPost.content_type === 'safety_alert') {
+        await router.replace({ name: 'map', query: { post: loadedPost.id } });
+        return;
+      }
+      selectedPost.value = toPostItem(loadedPost);
       await nextTick();
       feedElement.value?.scrollTo({ top: 0 });
       feedElement.value

@@ -67,6 +67,7 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
       <button type="button" class="retry-preview" @click="retry++">Réessayer</button>
     </div>
     <template v-else-if="post">
+      <p v-if="post.content_type === 'safety_alert'" class="text-sm font-semibold text-red-700">Signalement</p>
       <h2 class="preview-title">{{ post.title }}</h2>
       <p class="preview-description">{{ post.description }}</p>
       <p v-if="address" class="preview-address">
@@ -74,7 +75,7 @@ watch([() => props.postId, retry], async (_value, _previous, onCleanup) => {
         <small v-if="addressSource === 'openstreetmap'" class="address-credit">© OpenStreetMap contributors</small>
       </p>
       <p v-else-if="addressUnavailable" class="preview-address">Adresse indisponible</p>
-      <RouterLink class="view-post" :to="{ name: 'posts', query: { post: postId } }">Voir la publication</RouterLink>
+      <RouterLink v-if="post.content_type !== 'safety_alert'" class="view-post" :to="{ name: 'posts', query: { post: postId } }">Voir la publication</RouterLink>
     </template>
   </section>
 </template>

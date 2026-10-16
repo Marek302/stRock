@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch } from 'vue'
+import type { PostLocation } from '../types/post'
 import type { Map } from 'leaflet'
 import { useRoute, useRouter } from 'vue-router'
 import MapPost from '../components/MapPost.vue'
@@ -71,11 +72,11 @@ const linkedLocation = computed(() => {
   const longitude = Number(route.query.longitude)
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)
     || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) return null
-  return { id: requestedPostId.value, latitude, longitude }
+  return { id: requestedPostId.value, latitude, longitude, content_type: 'publication' as const }
 })
 const positionedPosts = computed(() => {
   const posts = locations.value.filter(
-    (post): post is { id: string; latitude: number; longitude: number } =>
+    (post): post is PostLocation & { latitude: number; longitude: number } =>
       post.latitude != null && post.longitude != null
       && Number.isFinite(post.latitude) && Number.isFinite(post.longitude)
       && Math.abs(post.latitude) <= 90 && Math.abs(post.longitude) <= 180,
@@ -123,6 +124,7 @@ watch(
         :key="post.id"
         :map="mapInstance"
         :post-id="post.id"
+        :is-report="post.content_type === 'safety_alert'"
         :selected="activePostId === post.id"
         @select="selectPreview(post.id)"
         @close="closePreview"

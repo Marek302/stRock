@@ -130,7 +130,7 @@ class PostgresApiTests(unittest.TestCase):
         self.assertEqual({p['id'] for p in feed}, {event['id'], urban['id']})
         locations = self.client.get('/api/v1/posts/locations').json()
         self.assertTrue({event['id'], safety['id'], urban['id']} <= {p['id'] for p in locations})
-        self.assertTrue(all(set(p)=={'id','latitude','longitude'} for p in locations))
+        self.assertTrue(all(set(p)=={'id','latitude','longitude','content_type'} for p in locations))
         self.assertEqual(self.client.patch(f"/api/v1/posts/{safety['id']}/close", headers={'Authorization':'Bearer other'}).status_code, 403)
         self.assertEqual(self.client.patch(f"/api/v1/posts/{event['id']}/close", headers=self.headers).status_code, 400)
         self.assertEqual(self.client.patch(f"/api/v1/posts/{safety['id']}/close", headers=self.headers).status_code, 200)

@@ -4,7 +4,6 @@ import {
   Search,
   Send,
   Trash2,
-  User,
   ArrowLeft,
   X,
   MessageSquare,
@@ -200,26 +199,12 @@ function formatTime(isoString?: string) {
 </script>
 
 <template>
-  <div class="h-screen w-full bg-slate-50 flex flex-col overflow-hidden text-slate-900">
-    <!-- En-tête -->
-    <header class="bg-white border-b border-slate-200 px-4 h-12 flex items-center justify-between shrink-0">
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 rounded-lg transition-colors cursor-pointer"
-        >
-          <ArrowLeft class="w-3.5 h-3.5" />
-          <span>Accueil</span>
-        </button>
-        <div class="h-4 w-px bg-slate-200" />
-        <span class="font-bold text-sm tracking-tight text-slate-900">roch-on messagerie</span>
-      </div>
-      <span class="text-xs text-slate-400">
-        {{ conversations.length }} {{ conversations.length <= 1 ? 'conversation' : 'conversations' }}
-      </span>
+  <div class="page messages-page w-full bg-slate-50 flex flex-col overflow-hidden text-slate-900">
+    <header class="bg-white border-b border-slate-200 px-4 h-12 flex items-center shrink-0">
+      <span class="font-bold text-sm tracking-tight text-slate-900">Messagerie</span>
     </header>
 
-    <div class="flex-1 flex overflow-hidden relative">
+    <div class="min-h-0 flex-1 flex overflow-hidden relative">
       <!-- Liste des conversations -->
       <aside :class="['w-full md:w-80 lg:w-96 bg-white border-r border-slate-200 flex flex-col shrink-0', selectedConvo ? 'hidden md:flex' : 'flex']">
         <div class="p-3 border-b border-slate-100">
@@ -283,7 +268,7 @@ function formatTime(isoString?: string) {
       </aside>
 
       <!-- Salle de chat active -->
-      <section v-if="selectedConvo" :class="['flex-1 flex flex-col bg-slate-50/50', selectedConvo ? 'flex' : 'hidden md:flex']">
+      <section v-if="selectedConvo" :class="['min-h-0 min-w-0 flex-1 flex flex-col bg-slate-50/50', selectedConvo ? 'flex' : 'hidden md:flex']">
         <div class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-2xs">
           <div class="flex items-center gap-3 min-w-0">
             <button type="button" @click="selectedConvo = null" class="md:hidden p-1.5 text-slate-500 hover:text-slate-900 rounded-lg">
@@ -305,19 +290,11 @@ function formatTime(isoString?: string) {
             </button>
           </div>
 
-          <div class="flex items-center gap-1">
-            <button type="button" @click="showProfileModal = true" class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg text-xs font-medium flex items-center gap-1">
-              <User class="w-4 h-4" />
-              <span class="hidden sm:inline">Profil</span>
-            </button>
-            <button type="button" @click="confirmDelete(selectedConvo)" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg">
-              <Trash2 class="w-4 h-4" />
-            </button>
-          </div>
+
         </div>
 
         <!-- Messages -->
-        <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-3">
+        <div ref="messagesContainer" class="min-h-0 flex-1 overflow-y-auto p-4 space-y-3">
           <div
             v-for="msg in messages"
             :key="msg.id"
@@ -340,7 +317,7 @@ function formatTime(isoString?: string) {
               v-model="messageInput"
               type="text"
               placeholder="Écrire un message..."
-              class="flex-1 px-4 py-2 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
+              class="min-w-0 flex-1 px-4 py-2 text-xs sm:text-sm bg-slate-50 rounded-xl border border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-900 focus:bg-white"
             />
             <button type="submit" :disabled="isSending || !messageInput.trim()" class="p-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 disabled:opacity-40 shadow-2xs">
               <Send class="w-4 h-4" />
@@ -420,3 +397,17 @@ function formatTime(isoString?: string) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.messages-page {
+  padding-top: calc(112px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .messages-page {
+    padding-top: 112px;
+    padding-bottom: 0;
+  }
+}
+</style>

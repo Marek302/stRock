@@ -73,7 +73,7 @@ class PostService:
         )
 
     def list_locations(self):
-        statement = self._active(select(PostEntity.id, PostEntity.latitude, PostEntity.longitude)).where(
+        statement = self._active(select(PostEntity.id, PostEntity.latitude, PostEntity.longitude, PostEntity.content_type)).where(
             col(PostEntity.latitude).is_not(None), col(PostEntity.longitude).is_not(None))
         return [PostLocation.model_validate(row) for row in self.session.exec(statement).all()]
 
