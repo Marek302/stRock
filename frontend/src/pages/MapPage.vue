@@ -150,7 +150,7 @@ watch(
 .location-picker-panel {
   position: absolute;
   z-index: 1000;
-  top: 16px;
+  bottom: calc(var(--mobile-navbar-height) + env(safe-area-inset-bottom, 0px) + 16px);
   left: 16px;
   max-width: min(360px, calc(100% - 32px));
   padding: 12px;
@@ -161,4 +161,10 @@ watch(
 
 .location-picker-panel p { margin: 0 0 8px; }
 .location-picker-panel button { color: #2563eb; cursor: pointer; }
+
+@media (min-width: 768px) {
+  .location-picker-panel {
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+}
 </style>
