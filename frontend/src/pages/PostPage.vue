@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getPost } from '../api/posts'
 import type { PostItem } from '../types/post'
 import Post from '../components/Post.vue'
 import { toPostItem, usePosts } from '../composables/usePosts'
+import { MessagingApi } from '../api/messagingApi'
 
+const router = useRouter()
 const { posts, isLoading, error, hasMore, reload, loadMore, loadOnScroll } = usePosts()
 const route = useRoute()
 const selectedPost = ref<PostItem | null>(null)
@@ -37,6 +39,16 @@ watch(() => route.name === 'posts' ? route.query.post : undefined, async (id, _p
     if (!controller.signal.aborted) selectedLoading.value = false
   }
 }, { immediate: true })
+
+// ⭐️ Fonction pour contacter le vendeur et rediriger vers la messagerie
+async function onContactSeller(postId: string) {
+  try {
+    await MessagingApi.createConversation(postId)
+    await router.push({ name: 'messages' })
+  } catch (err) {
+    console.error('Erreur lors de la création de la discussion:', err)
+  }
+}
 </script>
 
 <template>
@@ -60,6 +72,7 @@ watch(() => route.name === 'posts' ? route.query.post : undefined, async (id, _p
         :location="post.location"
         :starts-at="post.startsAt"
         :ends-at="post.endsAt"
+        @contact="onContactSeller(post.id)"
       />
       <div v-if="isLoading || error || !hasMore" class="feed-status p-6 text-center text-slate-600">
         <p v-if="isLoading" role="status">Chargement des publications…</p>
